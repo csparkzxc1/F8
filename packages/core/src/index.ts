@@ -14,11 +14,37 @@ export type {
 export { F8Logo } from './components/brand/F8Logo';
 export { Slogan } from './components/brand/Slogan';
 
+export { FilteredImage } from './components/editor/FilteredImage';
+export { IntensitySlider } from './components/editor/IntensitySlider';
+export { AdjustmentsPanel } from './components/editor/AdjustmentsPanel';
+
 export { ThemeProvider, useTheme, baseColors, variantAccents, typography, fontFamily } from './theme';
 
 export { t, getLocale, setLocale } from './i18n';
 export type { Locale, Dict } from './i18n';
 
 export { useEditorStore, defaultAdjustments } from './store/editorStore';
+
+export {
+  buildUniforms,
+  buildHistogram,
+  suggestAdjustments,
+  getLutEffect,
+  getAdjustmentsEffect,
+  getGrainEffect,
+  getLightleakEffect,
+  LUT_SHADER,
+  ADJUSTMENTS_SHADER,
+  GRAIN_SHADER,
+  LIGHTLEAK_SHADER,
+} from './engine';
+export type {
+  FilterUniforms,
+  LutUniforms,
+  AdjustmentUniforms,
+  GrainUniforms,
+  LightleakUniforms,
+  Histogram,
+} from './engine';
 
 export type { RootStackParamList } from './navigation/types';

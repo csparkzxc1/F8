@@ -12,7 +12,9 @@
     "react": "*",
     "react-native": "*",
     "@react-navigation/native": "*",
-    "@react-navigation/native-stack": "*"
+    "@react-navigation/native-stack": "*",
+    "@shopify/react-native-skia": "*",
+    "zustand": "*"
   },
   "devDependencies": {
     "@types/react": "^18.3.0",

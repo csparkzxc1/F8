@@ -26,6 +26,8 @@ import { CompareSlider } from '../components/editor/CompareSlider';
 import { useEditorStore } from '../store/editorStore';
 import { useToast } from '../components/ui/Toast';
 import { saveSkImage } from '../services/saveImage';
+import { haptic } from '../services/haptics';
+import { track } from '../services/analytics';
 import type { RootStackParamList } from '../navigation/types';
 
 type Route = RouteProp<RootStackParamList, 'Editor'>;
@@ -58,8 +60,11 @@ export function EditorScreen() {
     try {
       const snapshot = renderSnapshot(image, previewSize);
       await saveSkImage(snapshot);
+      haptic.success();
+      track('photo_saved');
       showToast(copy.editor.savedToast);
     } catch {
+      haptic.error();
       showToast(copy.errors.saveFailed, 'error');
     } finally {
       setSaving(false);

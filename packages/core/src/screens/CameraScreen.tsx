@@ -20,6 +20,8 @@ import {
 import { useTheme } from '../theme/ThemeProvider';
 import { F8Logo } from '../components/brand/F8Logo';
 import { useEditorStore } from '../store/editorStore';
+import { haptic } from '../services/haptics';
+import { track } from '../services/analytics';
 import { t } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -46,6 +48,8 @@ export function CameraScreen() {
   const onShutter = useCallback(async () => {
     if (!cameraRef.current || shooting) return;
     setShooting(true);
+    haptic.shutter();
+    track('photo_shot');
 
     const photo: PhotoFile = await cameraRef.current.takePhoto({
       flash: 'off',

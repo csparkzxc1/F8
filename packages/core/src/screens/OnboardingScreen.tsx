@@ -7,6 +7,8 @@ import { useVariant } from '../variant/VariantContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { Slogan } from '../components/brand/Slogan';
 import { F8Logo } from '../components/brand/F8Logo';
+import { haptic } from '../services/haptics';
+import { track } from '../services/analytics';
 import { t } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -27,7 +29,9 @@ export function OnboardingScreen() {
   const isLast = index === slides.length - 1;
 
   function next() {
+    haptic.tap();
     if (isLast) {
+      track('onboarding_complete');
       nav.replace('Home');
       return;
     }

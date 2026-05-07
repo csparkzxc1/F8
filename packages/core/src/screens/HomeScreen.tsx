@@ -6,9 +6,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVariant } from '../variant/VariantContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { F8Logo } from '../components/brand/F8Logo';
-import { useToast } from '../components/ui/Toast';
 import { t } from '../i18n';
 import { pickPhoto } from '../services/imagePicker';
+import { haptic } from '../services/haptics';
+import { track } from '../services/analytics';
 import { useEditorStore } from '../store/editorStore';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -20,32 +21,36 @@ export function HomeScreen() {
   const nav = useNavigation<Nav>();
   const copy = t();
   const setPhoto = useEditorStore((s) => s.setPhoto);
-  const showToast = useToast((s) => s.show);
 
   async function onPick() {
+    haptic.tap();
     const uri = await pickPhoto();
     if (!uri) return;
     setPhoto(uri);
+    track('photo_picked');
     nav.navigate('Editor', { photoUri: uri });
   }
 
   function onShoot() {
-    try {
-      nav.navigate('Camera');
-    } catch {
-      // Camera screen lands in Phase 4 build profiles only.
-      showToast(copy.errors.loadPhoto, 'error');
-    }
+    haptic.tap();
+    nav.navigate('Camera');
   }
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
       <View style={styles.header}>
-        <View style={styles.brand}>
-          <F8Logo size={28} color={theme.colors.text} />
-          <Text style={[styles.variantName, { color: theme.colors.textMuted }]}>
-            {variant.appName.replace(/^F8\s*/, '')}
-          </Text>
+        <View style={styles.headerRow}>
+          <View style={styles.brand}>
+            <F8Logo size={28} color={theme.colors.text} />
+            <Text style={[styles.variantName, { color: theme.colors.textMuted }]}>
+              {variant.appName.replace(/^F8\s*/, '')}
+            </Text>
+          </View>
+          <Pressable onPress={() => nav.navigate('Settings')} hitSlop={12}>
+            <Text style={[styles.settings, { color: theme.colors.textMuted }]}>
+              {copy.common.settings}
+            </Text>
+          </Pressable>
         </View>
         <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
           {variant.copy.home.subtitle}
@@ -82,6 +87,12 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, paddingHorizontal: 24 },
   header: { paddingTop: 24, paddingBottom: 32, gap: 8 },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  settings: { fontSize: 14, fontWeight: '500' },
   brand: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
   variantName: { fontSize: 18, fontWeight: '500', letterSpacing: -0.3 },
   subtitle: { fontSize: 14 },

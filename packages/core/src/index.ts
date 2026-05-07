@@ -52,7 +52,20 @@ export type {
   Histogram,
 } from './engine';
 
-export { pickPhoto, saveSkImage, initIap, endIap, listOwned, buyPack, restorePurchases } from './services';
+export {
+  pickPhoto,
+  saveSkImage,
+  initIap,
+  endIap,
+  listOwned,
+  buyPack,
+  restorePurchases,
+  haptic,
+  track,
+  identify,
+  setAnalytics,
+} from './services';
+export type { AnalyticsEvent, AnalyticsAdapter } from './services/analytics';
 export { useIapStore, isPackOwned } from './store/iapStore';
 
 export type { RootStackParamList } from './navigation/types';

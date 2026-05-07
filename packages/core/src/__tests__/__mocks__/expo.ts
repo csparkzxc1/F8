@@ -1,0 +1,20 @@
+// Catch-all mock for any expo-* module imported by code under test.
+export const launchImageLibraryAsync = async () => ({ canceled: true, assets: [] });
+export const requestMediaLibraryPermissionsAsync = async () => ({ granted: false });
+export const MediaTypeOptions = { Images: 'Images' };
+export const requestPermissionsAsync = async () => ({ granted: false });
+export const createAssetAsync = async () => ({ uri: '' });
+export const getAlbumAsync = async () => null;
+export const createAlbumAsync = async () => ({ uri: '' });
+export const addAssetsToAlbumAsync = async () => true;
+export const writeAsStringAsync = async () => undefined;
+export const cacheDirectory = '/tmp/';
+export const EncodingType = { Base64: 'base64' };
+export const selectionAsync = async () => undefined;
+export const impactAsync = async () => undefined;
+export const notificationAsync = async () => undefined;
+export const ImpactFeedbackStyle = { Heavy: 'heavy' };
+export const NotificationFeedbackType = { Success: 'success', Error: 'error' };
+export const manipulateAsync = async (uri: string) => ({ uri });
+export const SaveFormat = { JPEG: 'jpeg', PNG: 'png' };
+export default { expoConfig: { extra: {} } };

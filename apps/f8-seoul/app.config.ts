@@ -51,6 +51,10 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: false,
   },
+  extra: {
+    // Inject via EAS secret POSTHOG_KEY_SEOUL or leave empty for dev.
+    posthogKey: process.env.POSTHOG_KEY_SEOUL ?? '',
+  },
 };
 
 export default config;

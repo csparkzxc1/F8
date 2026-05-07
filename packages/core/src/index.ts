@@ -65,6 +65,9 @@ export {
   track,
   identify,
   setAnalytics,
+  initPostHog,
+  getPostHog,
+  normalizeImage,
 } from './services';
 export type { AnalyticsEvent, AnalyticsAdapter } from './services/analytics';
 export { useIapStore, isPackOwned } from './store/iapStore';

@@ -45,6 +45,9 @@ const config: ExpoConfig = {
     ],
   ],
   experiments: { typedRoutes: false },
+  extra: {
+    posthogKey: process.env.POSTHOG_KEY_WEDDING ?? '',
+  },
 };
 
 export default config;

@@ -22,6 +22,7 @@ import { F8Logo } from '../components/brand/F8Logo';
 import { useEditorStore } from '../store/editorStore';
 import { haptic } from '../services/haptics';
 import { track } from '../services/analytics';
+import { normalizeImage } from '../services/normalizeImage';
 import { t } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -54,7 +55,8 @@ export function CameraScreen() {
     const photo: PhotoFile = await cameraRef.current.takePhoto({
       flash: 'off',
     });
-    const uri = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
+    const rawUri = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
+    const uri = await normalizeImage(rawUri);
     setPhoto(uri);
 
     Animated.sequence([

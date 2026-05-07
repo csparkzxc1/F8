@@ -1,7 +1,7 @@
 // Single-pass-equivalent filter chain over an SkImage:
-// adjustments → LUT → grain → lightleak. All shaders nest as ImageShaders.
-// Exposes a snapshot() handle so the editor can save the rendered pixels
-// (not the source) when the user taps 저장.
+// adjustments → LUT → grain → lightleak. Each pass is gated by an "is-active"
+// check so that, on low-spec devices, idle passes (e.g. grain at 0) are
+// completely skipped instead of wasting fragment cycles.
 import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
@@ -53,44 +53,56 @@ export const FilteredImage = forwardRef<FilteredImageHandle, Props>(function Fil
     [canvasRef],
   );
 
+  // Per-pass gates. A pass with all uniforms at 0 is a no-op — drop it from
+  // the shader chain entirely so low-spec GPUs don't pay the sample cost.
+  const grainOn = uniforms.grain.amount > 0.001;
+  const leakOn =
+    uniforms.lightleak.leakAmount > 0.001 ||
+    uniforms.lightleak.vignetteAmount > 0.001 ||
+    uniforms.lightleak.halation > 0.001;
+  const lutOn = !!lut && uniforms.lut.intensity > 0.001;
+
   const adj = getAdjustmentsEffect();
-  const grain = getGrainEffect();
-  const leak = getLightleakEffect();
-  const lutEff = lut ? getLutEffect() : null;
+
+  // Build the chain bottom-up: source → adjustments → [lut] → [grain] → [leak].
+  let chain = (
+    <Shader source={adj} uniforms={uniforms.adjustments}>
+      <ImageShader image={image} fit="cover" rect={{ x: 0, y: 0, width, height }} />
+    </Shader>
+  );
+
+  if (lutOn && lut) {
+    const lutEff = getLutEffect();
+    chain = (
+      <Shader source={lutEff} uniforms={uniforms.lut}>
+        {chain}
+        <ImageShader image={lut} fit="fill" rect={{ x: 0, y: 0, width: 512, height: 512 }} />
+      </Shader>
+    );
+  }
+
+  if (grainOn) {
+    const grainEff = getGrainEffect();
+    chain = (
+      <Shader source={grainEff} uniforms={uniforms.grain}>
+        {chain}
+      </Shader>
+    );
+  }
+
+  if (leakOn) {
+    const leakEff = getLightleakEffect();
+    chain = (
+      <Shader source={leakEff} uniforms={uniforms.lightleak}>
+        {chain}
+      </Shader>
+    );
+  }
 
   return (
     <View style={[styles.wrap, { width, height }]}>
       <Canvas ref={canvasRef} style={{ width, height }}>
-        <Fill>
-          <Shader source={leak} uniforms={uniforms.lightleak}>
-            <Shader source={grain} uniforms={uniforms.grain}>
-              {lutEff && lut ? (
-                <Shader source={lutEff} uniforms={uniforms.lut}>
-                  <Shader source={adj} uniforms={uniforms.adjustments}>
-                    <ImageShader
-                      image={image}
-                      fit="cover"
-                      rect={{ x: 0, y: 0, width, height }}
-                    />
-                  </Shader>
-                  <ImageShader
-                    image={lut}
-                    fit="fill"
-                    rect={{ x: 0, y: 0, width: 512, height: 512 }}
-                  />
-                </Shader>
-              ) : (
-                <Shader source={adj} uniforms={uniforms.adjustments}>
-                  <ImageShader
-                    image={image}
-                    fit="cover"
-                    rect={{ x: 0, y: 0, width, height }}
-                  />
-                </Shader>
-              )}
-            </Shader>
-          </Shader>
-        </Fill>
+        <Fill>{chain}</Fill>
       </Canvas>
     </View>
   );

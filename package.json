@@ -9,7 +9,9 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "seoul": "pnpm --filter f8-seoul start"
+    "seoul": "pnpm --filter f8-seoul start",
+    "tokyo": "pnpm --filter f8-tokyo start",
+    "wedding": "pnpm --filter f8-wedding start"
   },
   "devDependencies": {
     "turbo": "^2.0.0",

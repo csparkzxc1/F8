@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { EditorScreen } from '../screens/EditorScreen';
+import { CameraScreen } from '../screens/CameraScreen';
+import { PresetStoreScreen } from '../screens/PresetStoreScreen';
 import { useTheme } from '../theme/ThemeProvider';
 import type { RootStackParamList } from './types';
 
@@ -23,6 +25,8 @@ export function RootNavigator() {
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Editor" component={EditorScreen} />
+      <Stack.Screen name="Camera" component={CameraScreen} options={{ animation: 'slide_from_bottom' }} />
+      <Stack.Screen name="PresetStore" component={PresetStoreScreen} />
     </Stack.Navigator>
   );
 }

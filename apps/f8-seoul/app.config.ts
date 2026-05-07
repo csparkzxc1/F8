@@ -41,6 +41,12 @@ const config: ExpoConfig = {
         savePhotosPermission: '결과 사진을 갤러리에 저장합니다.',
       },
     ],
+    [
+      'react-native-vision-camera',
+      {
+        cameraPermissionText: '필름 카메라처럼 그 자리를 담기 위해 카메라 접근이 필요합니다.',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: false,

@@ -1,4 +1,4 @@
-// Home: F8 wordmark + variant.copy.home. Shoot / Pick photo CTAs. UI shell only.
+// Home: F8 wordmark + variant.copy.home. Shoot / Pick photo CTAs.
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -6,7 +6,10 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVariant } from '../variant/VariantContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { F8Logo } from '../components/brand/F8Logo';
+import { useToast } from '../components/ui/Toast';
 import { t } from '../i18n';
+import { pickPhoto } from '../services/imagePicker';
+import { useEditorStore } from '../store/editorStore';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -16,6 +19,24 @@ export function HomeScreen() {
   const theme = useTheme();
   const nav = useNavigation<Nav>();
   const copy = t();
+  const setPhoto = useEditorStore((s) => s.setPhoto);
+  const showToast = useToast((s) => s.show);
+
+  async function onPick() {
+    const uri = await pickPhoto();
+    if (!uri) return;
+    setPhoto(uri);
+    nav.navigate('Editor', { photoUri: uri });
+  }
+
+  function onShoot() {
+    try {
+      nav.navigate('Camera');
+    } catch {
+      // Camera screen lands in Phase 4 build profiles only.
+      showToast(copy.errors.loadPhoto, 'error');
+    }
+  }
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
@@ -33,13 +54,13 @@ export function HomeScreen() {
 
       <View style={styles.actions}>
         <Pressable
-          onPress={() => nav.navigate('Editor')}
+          onPress={onShoot}
           style={[styles.primary, { backgroundColor: theme.colors.accent }]}
         >
           <Text style={[styles.primaryLabel, { color: theme.colors.bg }]}>{copy.home.shoot}</Text>
         </Pressable>
         <Pressable
-          onPress={() => nav.navigate('Editor')}
+          onPress={onPick}
           style={[styles.secondary, { borderColor: theme.colors.border }]}
         >
           <Text style={[styles.secondaryLabel, { color: theme.colors.text }]}>

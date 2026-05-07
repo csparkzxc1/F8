@@ -26,7 +26,22 @@ const config: ExpoConfig = {
       backgroundColor: '#0A0A0A',
     },
   },
-  plugins: ['expo-dev-client'],
+  plugins: [
+    'expo-dev-client',
+    [
+      'expo-image-picker',
+      {
+        photosPermission: '필름 카메라처럼 사진을 불러오기 위해 사진 접근이 필요합니다.',
+      },
+    ],
+    [
+      'expo-media-library',
+      {
+        photosPermission: '결과 사진을 갤러리에 저장합니다.',
+        savePhotosPermission: '결과 사진을 갤러리에 저장합니다.',
+      },
+    ],
+  ],
   experiments: {
     typedRoutes: false,
   },

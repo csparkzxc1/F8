@@ -17,6 +17,11 @@ export { Slogan } from './components/brand/Slogan';
 export { FilteredImage } from './components/editor/FilteredImage';
 export { IntensitySlider } from './components/editor/IntensitySlider';
 export { AdjustmentsPanel } from './components/editor/AdjustmentsPanel';
+export { PresetStrip } from './components/editor/PresetStrip';
+export { CompareSlider } from './components/editor/CompareSlider';
+export { BodyFilmPicker } from './components/editor/BodyFilmPicker';
+
+export { ToastHost, useToast } from './components/ui/Toast';
 
 export { ThemeProvider, useTheme, baseColors, variantAccents, typography, fontFamily } from './theme';
 
@@ -46,5 +51,7 @@ export type {
   LightleakUniforms,
   Histogram,
 } from './engine';
+
+export { pickPhoto, saveSkImage } from './services';
 
 export type { RootStackParamList } from './navigation/types';

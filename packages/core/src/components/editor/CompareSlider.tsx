@@ -1,13 +1,14 @@
 // Drag horizontally to reveal the original through a vertical seam.
-// Long-press anywhere to bypass and show the source 1:1.
-import React, { useRef, useState } from 'react';
+// Long-press anywhere to bypass and show the source 1:1. Uses locationX
+// so the seam tracks the finger regardless of screen offset.
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   PanResponder,
   Pressable,
   StyleSheet,
   Text,
   View,
-  type LayoutChangeEvent,
+  type GestureResponderEvent,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 import { t } from '../../i18n';
@@ -27,24 +28,30 @@ export function CompareSlider({ width, height, before, after, initialRatio = 0.5
   const [holding, setHolding] = useState(false);
   const ratioRef = useRef(initialRatio);
 
-  const responder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, g) => {
-        const next = Math.max(0, Math.min(1, (g.x0 + g.dx) / Math.max(1, width)));
-        ratioRef.current = next;
-        setRatio(next);
-      },
-    }),
-  ).current;
+  const apply = useCallback(
+    (localX: number) => {
+      const next = Math.max(0, Math.min(1, localX / Math.max(1, width)));
+      ratioRef.current = next;
+      setRatio(next);
+    },
+    [width],
+  );
 
-  const onLayout = (_: LayoutChangeEvent) => undefined;
+  const responder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderGrant: (evt: GestureResponderEvent) => apply(evt.nativeEvent.locationX),
+        onPanResponderMove: (evt: GestureResponderEvent) => apply(evt.nativeEvent.locationX),
+      }),
+    [apply],
+  );
+
   const seamX = (holding ? 1 : ratio) * width;
 
   return (
     <Pressable
-      onLayout={onLayout}
       onLongPress={() => setHolding(true)}
       onPressOut={() => setHolding(false)}
       delayLongPress={120}
@@ -56,6 +63,11 @@ export function CompareSlider({ width, height, before, after, initialRatio = 0.5
       </View>
       <View
         {...responder.panHandlers}
+        style={[styles.touchArea, { width, height }]}
+        pointerEvents="box-only"
+      />
+      <View
+        pointerEvents="none"
         style={[
           styles.seam,
           { left: seamX - 1, height, backgroundColor: theme.colors.text },
@@ -74,6 +86,7 @@ export function CompareSlider({ width, height, before, after, initialRatio = 0.5
 const styles = StyleSheet.create({
   root: { position: 'relative' },
   layer: { position: 'absolute', top: 0, left: 0 },
+  touchArea: { position: 'absolute', top: 0, left: 0 },
   seam: { position: 'absolute', top: 0, width: 2, alignItems: 'center', justifyContent: 'center' },
   handle: {
     width: 28,

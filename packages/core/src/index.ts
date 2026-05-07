@@ -15,6 +15,7 @@ export { F8Logo } from './components/brand/F8Logo';
 export { Slogan } from './components/brand/Slogan';
 
 export { FilteredImage } from './components/editor/FilteredImage';
+export type { FilteredImageHandle } from './components/editor/FilteredImage';
 export { IntensitySlider } from './components/editor/IntensitySlider';
 export { AdjustmentsPanel } from './components/editor/AdjustmentsPanel';
 export { PresetStrip } from './components/editor/PresetStrip';

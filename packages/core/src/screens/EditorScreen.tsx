@@ -14,12 +14,10 @@ import {
   Canvas,
   Image as SkiaImage,
   useImage,
-  Skia,
-  type SkImage,
 } from '@shopify/react-native-skia';
 import { useTheme } from '../theme/ThemeProvider';
 import { t } from '../i18n';
-import { FilteredImage } from '../components/editor/FilteredImage';
+import { FilteredImage, type FilteredImageHandle } from '../components/editor/FilteredImage';
 import { AdjustmentsPanel } from '../components/editor/AdjustmentsPanel';
 import { PresetStrip } from '../components/editor/PresetStrip';
 import { CompareSlider } from '../components/editor/CompareSlider';
@@ -47,18 +45,16 @@ export function EditorScreen() {
   const showToast = useToast((s) => s.show);
 
   const image = useImage(photoUri ?? null);
+  const filteredRef = useRef<FilteredImageHandle>(null);
   const [comparing, setComparing] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  // Snapshot the visible filtered preview for export. We re-render the same
-  // pipeline into an offscreen surface using makeImageSnapshot.
-  const previewRef = useRef<View>(null);
 
   const onSave = useCallback(async () => {
     if (!image || saving) return;
     setSaving(true);
     try {
-      const snapshot = renderSnapshot(image, previewSize);
+      const snapshot = filteredRef.current?.snapshot();
+      if (!snapshot) throw new Error('snapshot-failed');
       await saveSkImage(snapshot);
       haptic.success();
       track('photo_saved');
@@ -69,7 +65,7 @@ export function EditorScreen() {
     } finally {
       setSaving(false);
     }
-  }, [image, previewSize, saving, copy, showToast]);
+  }, [image, saving, copy, showToast]);
 
   const onClose = useCallback(() => {
     reset();
@@ -80,6 +76,7 @@ export function EditorScreen() {
     () =>
       image ? (
         <FilteredImage
+          ref={filteredRef}
           image={image}
           adjustments={adjustments}
           width={previewSize}
@@ -127,7 +124,7 @@ export function EditorScreen() {
         </Pressable>
       </View>
 
-      <View ref={previewRef} style={[styles.preview, { width: previewSize, height: previewSize }]}>
+      <View style={[styles.preview, { width: previewSize, height: previewSize }]}>
         {image && filtered && original ? (
           comparing ? (
             <CompareSlider
@@ -154,24 +151,6 @@ export function EditorScreen() {
       </ScrollView>
     </SafeAreaView>
   );
-}
-
-// Off-screen snapshot for export. Skia's makeImageSnapshot of a Surface keeps
-// the same shader pipeline but writes to a backing image we can encode.
-function renderSnapshot(source: SkImage, size: number): SkImage {
-  const surface = Skia.Surface.MakeOffscreen(size, size);
-  if (!surface) throw new Error('skia-surface-failed');
-  const canvas = surface.getCanvas();
-  const paint = Skia.Paint();
-  canvas.drawImageRect(
-    source,
-    { x: 0, y: 0, width: source.width(), height: source.height() },
-    { x: 0, y: 0, width: size, height: size },
-    paint,
-  );
-  surface.flush();
-  const snap = surface.makeImageSnapshot();
-  return snap;
 }
 
 const styles = StyleSheet.create({

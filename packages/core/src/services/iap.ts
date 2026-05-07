@@ -1,5 +1,7 @@
 // IAP wrapper. Owned-pack ids cached in AsyncStorage so the UI updates
 // immediately while a remote receipt validation runs in background.
+// Critical: every successful purchase must be acknowledged via
+// finishTransaction or iOS keeps re-delivering it on every cold start.
 import * as IAP from 'react-native-iap';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -36,7 +38,11 @@ async function persistOwned(ids: string[]): Promise<void> {
 
 export async function buyPack(productId: string): Promise<boolean> {
   try {
-    await IAP.requestPurchase({ sku: productId });
+    const purchase = await IAP.requestPurchase({ sku: productId });
+    const result = Array.isArray(purchase) ? purchase[0] : purchase;
+    if (!result) return false;
+    // Preset packs are non-consumable — keep them owned permanently.
+    await IAP.finishTransaction({ purchase: result, isConsumable: false });
     const owned = await listOwned();
     await persistOwned([...owned, productId]);
     return true;
@@ -47,6 +53,13 @@ export async function buyPack(productId: string): Promise<boolean> {
 
 export async function restorePurchases(): Promise<string[]> {
   const purchases = await IAP.getAvailablePurchases();
+  for (const purchase of purchases) {
+    try {
+      await IAP.finishTransaction({ purchase, isConsumable: false });
+    } catch {
+      // Already finished — ignore.
+    }
+  }
   const ids = purchases.map((p) => p.productId);
   await persistOwned(ids);
   return ids;

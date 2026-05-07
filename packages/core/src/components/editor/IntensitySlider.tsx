@@ -1,11 +1,13 @@
-// Lightweight gesture-driven slider. No external dep so the package stays portable.
-import React, { useCallback, useState } from 'react';
+// Lightweight gesture-driven slider. Uses locationX so it works regardless
+// of where the slider is positioned within the screen.
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   PanResponder,
   type LayoutChangeEvent,
+  type GestureResponderEvent,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
 
@@ -26,19 +28,24 @@ export function IntensitySlider({ label, value, min, max, onChange, formatValue 
     setWidth(e.nativeEvent.layout.width);
   }, []);
 
-  const responder = React.useMemo(
+  const apply = useCallback(
+    (localX: number) => {
+      if (width <= 0) return;
+      const ratio = Math.max(0, Math.min(1, localX / width));
+      onChange(min + (max - min) * ratio);
+    },
+    [width, min, max, onChange],
+  );
+
+  const responder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: () => true,
-        onPanResponderMove: (_, gesture) => {
-          if (width <= 0) return;
-          const ratio = Math.max(0, Math.min(1, gesture.x0 + gesture.dx)) / width;
-          const clamped = Math.max(0, Math.min(1, ratio));
-          onChange(min + (max - min) * clamped);
-        },
+        onPanResponderGrant: (evt: GestureResponderEvent) => apply(evt.nativeEvent.locationX),
+        onPanResponderMove: (evt: GestureResponderEvent) => apply(evt.nativeEvent.locationX),
       }),
-    [width, min, max, onChange],
+    [apply],
   );
 
   const ratio = (value - min) / (max - min || 1);

@@ -1,5 +1,7 @@
-// Horizontal preset picker. Shows variant.defaultPresets; tap selects, double-tap resets.
-import React from 'react';
+// Horizontal preset picker. Shows variant.defaultPresets plus presets from
+// any premium pack the user already owns. Tap selects (and applies the
+// preset's defaults), tap again deselects.
+import React, { useMemo } from 'react';
 import {
   FlatList,
   Image,
@@ -11,24 +13,46 @@ import {
 } from 'react-native';
 import { useVariant } from '../../variant/VariantContext';
 import { useEditorStore } from '../../store/editorStore';
+import { useIapStore, isPackUnlocked } from '../../store/iapStore';
 import { useTheme } from '../../theme/ThemeProvider';
+import { t } from '../../i18n';
+import { haptic } from '../../services/haptics';
+import { track } from '../../services/analytics';
 import type { Preset } from '../../variant/types';
 
-const TILE = 64;
+const TILE = 72;
 
 export function PresetStrip() {
   const theme = useTheme();
   const variant = useVariant();
   const active = useEditorStore((s) => s.activePreset);
   const setPreset = useEditorStore((s) => s.setPreset);
+  const ownedIds = useIapStore((s) => s.ownedPackIds);
+  const copy = t();
 
-  const presets = variant.defaultPresets;
+  const presets: Preset[] = useMemo(() => {
+    const unlocked = variant.premiumPacks
+      .filter((pack) => isPackUnlocked(pack.id, variant.iapProductIds, ownedIds))
+      .flatMap((pack) => pack.presets);
+    return [...variant.defaultPresets, ...unlocked];
+  }, [variant.defaultPresets, variant.premiumPacks, variant.iapProductIds, ownedIds]);
+
+  const onTap = (item: Preset, isActive: boolean) => {
+    haptic.tap();
+    if (isActive) {
+      setPreset(null);
+      return;
+    }
+    setPreset(item);
+    track('preset_applied', { id: item.id, premium: item.isPremium });
+  };
 
   const renderItem: ListRenderItem<Preset> = ({ item }) => {
     const isActive = active?.id === item.id;
+    const presetCopy = (copy.presets as Record<string, string>)[item.id];
     return (
       <Pressable
-        onPress={() => setPreset(isActive ? null : item)}
+        onPress={() => onTap(item, isActive)}
         style={[
           styles.tile,
           {
@@ -47,6 +71,14 @@ export function PresetStrip() {
         >
           {item.name}
         </Text>
+        {presetCopy ? (
+          <Text
+            numberOfLines={1}
+            style={[styles.subLabel, { color: theme.colors.textDimmed }]}
+          >
+            {presetCopy}
+          </Text>
+        ) : null}
         {item.isPremium ? (
           <View style={[styles.badge, { borderColor: theme.colors.accent }]}>
             <Text style={[styles.badgeText, { color: theme.colors.accent }]}>+</Text>
@@ -86,11 +118,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 2,
     padding: 4,
-    gap: 6,
+    gap: 4,
   },
   thumb: { width: TILE - 12, height: TILE - 12, borderRadius: 6, overflow: 'hidden' },
   thumbImage: { width: '100%', height: '100%' },
-  label: { fontSize: 11, fontWeight: '600', maxWidth: TILE - 8 },
+  label: { fontSize: 12, fontWeight: '700', maxWidth: TILE - 8, letterSpacing: -0.2 },
+  subLabel: { fontSize: 9.5, maxWidth: TILE - 8, fontStyle: 'italic' },
   badge: {
     position: 'absolute',
     top: 4,

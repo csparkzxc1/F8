@@ -32,4 +32,18 @@ export const ko: Dict = {
     buy: '구매',
     restore: '구매 복원',
   },
+  presets: {
+    noeul: '마지막 빛.',
+    daybreak: '아직 푸르다.',
+    first_snow: '조용히 내린다.',
+    childhood: '잊어도 남는다.',
+    summer_night: '끝나지 않을 것 같은.',
+    holiday: '그냥 좋다.',
+    rainy_days: '선명하게 젖었다.',
+    caffeine: '오래 머무를 것.',
+    stranger: '지나간 사람.',
+    soft_spring: '흩날리는.',
+    stillness: '말없이 있다.',
+    camellia: '붉게 핀다.',
+  },
 };

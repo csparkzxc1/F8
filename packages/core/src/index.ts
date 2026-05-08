@@ -70,6 +70,6 @@ export {
   normalizeImage,
 } from './services';
 export type { AnalyticsEvent, AnalyticsAdapter } from './services/analytics';
-export { useIapStore, isPackOwned } from './store/iapStore';
+export { useIapStore, isPackOwned, isPackUnlocked } from './store/iapStore';
 
 export type { RootStackParamList } from './navigation/types';

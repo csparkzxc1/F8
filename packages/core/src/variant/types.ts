@@ -28,8 +28,8 @@ export type Preset = {
   name: string;
   bodyId: string;
   filmId: string;
-  thumbnail: ImageSourcePropType | number;
-  lutAsset: ImageSourcePropType | number;
+  thumbnail?: ImageSourcePropType | number;
+  lutAsset?: ImageSourcePropType | number;
   defaults: AdjustmentValues;
   isPremium: boolean;
 };

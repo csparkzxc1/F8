@@ -36,3 +36,14 @@ export const useIapStore = create<IapState>((set) => ({
 export function isPackOwned(productId: string): boolean {
   return useIapStore.getState().ownedPackIds.includes(productId);
 }
+
+// True when either platform's product id for the pack is in the owned list.
+export function isPackUnlocked(
+  packId: string,
+  iapProductIds: Record<string, { ios: string; android: string }>,
+  ownedIds: string[],
+): boolean {
+  const map = iapProductIds[packId];
+  if (!map) return false;
+  return ownedIds.includes(map.ios) || ownedIds.includes(map.android);
+}

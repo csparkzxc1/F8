@@ -30,4 +30,19 @@ export type Dict = {
     buy: string;
     restore: string;
   };
+  // One-line poetic blurb shown under each preset name.
+  presets: {
+    noeul: string;
+    daybreak: string;
+    first_snow: string;
+    childhood: string;
+    summer_night: string;
+    holiday: string;
+    rainy_days: string;
+    caffeine: string;
+    stranger: string;
+    soft_spring: string;
+    stillness: string;
+    camellia: string;
+  };
 };

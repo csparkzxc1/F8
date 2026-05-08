@@ -40,11 +40,15 @@ export function EditorScreen() {
 
   const storedPhotoUri = useEditorStore((s) => s.photoUri);
   const adjustments = useEditorStore((s) => s.adjustments);
+  const activePreset = useEditorStore((s) => s.activePreset);
   const reset = useEditorStore((s) => s.reset);
   const photoUri = route.params?.photoUri ?? storedPhotoUri;
   const showToast = useToast((s) => s.show);
 
   const image = useImage(photoUri ?? null);
+  // useImage gracefully tolerates undefined (returns null) so the LUT pass
+  // is dropped by FilteredImage's skip-pass logic when no preset is active.
+  const lut = useImage(activePreset?.lutAsset ?? null);
   const filteredRef = useRef<FilteredImageHandle>(null);
   const [comparing, setComparing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -78,12 +82,13 @@ export function EditorScreen() {
         <FilteredImage
           ref={filteredRef}
           image={image}
+          lut={lut ?? undefined}
           adjustments={adjustments}
           width={previewSize}
           height={previewSize}
         />
       ) : null,
-    [image, adjustments, previewSize],
+    [image, lut, adjustments, previewSize],
   );
 
   const original = useMemo(

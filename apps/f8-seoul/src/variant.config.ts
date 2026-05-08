@@ -89,17 +89,12 @@ export const f8SeoulConfig: VariantConfig = {
     },
   },
   iapProductIds: {
-    cinematic_pack: {
-      ios: 'com.yourco.f8.seoul.cinematic',
-      android: 'cinematic_pack',
-    },
+    // v1 ships only Vintage Korea. Cinematic Pack and B&W Masters land at
+    // v1.5 / v2 per the Filter Catalog roadmap — register their ids in
+    // App Store Connect first, then add them here.
     vintage_korea: {
       ios: 'com.yourco.f8.seoul.vintage_korea',
       android: 'vintage_korea',
-    },
-    bw_masters: {
-      ios: 'com.yourco.f8.seoul.bw',
-      android: 'bw_masters',
     },
   },
 };

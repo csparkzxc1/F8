@@ -31,7 +31,14 @@ export const useEditorStore = create<EditorState>((set) => ({
   activePreset: null,
   adjustments: defaultAdjustments,
   setPhoto: (uri) => set({ photoUri: uri }),
-  setPreset: (preset) => set({ activePreset: preset }),
+  // Selecting a preset replaces the adjustment slate with its defaults so the
+  // user sees the intended look immediately. They can still fine-tune from
+  // there — the next setAdjustment call simply mutates the merged state.
+  setPreset: (preset) =>
+    set({
+      activePreset: preset,
+      adjustments: preset ? { ...preset.defaults } : { ...defaultAdjustments },
+    }),
   setAdjustment: (key, value) =>
     set((state) => ({ adjustments: { ...state.adjustments, [key]: value } })),
   reset: () =>

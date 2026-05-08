@@ -32,4 +32,18 @@ export const en: Dict = {
     buy: 'Buy',
     restore: 'Restore purchases',
   },
+  presets: {
+    noeul: 'The last light.',
+    daybreak: 'Still blue.',
+    first_snow: 'Quietly falling.',
+    childhood: 'Stays even when forgotten.',
+    summer_night: 'Like it never ends.',
+    holiday: 'Simply good.',
+    rainy_days: 'Sharply wet.',
+    caffeine: 'A long stay.',
+    stranger: 'Someone who passed.',
+    soft_spring: 'Drifting.',
+    stillness: 'Without a word.',
+    camellia: 'Blooming red.',
+  },
 };

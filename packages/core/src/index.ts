@@ -9,6 +9,7 @@ export type {
   Preset,
   PresetPack,
   PickerOption,
+  ImageAsset,
   AdjustmentValues,
 } from './variant/types';
 

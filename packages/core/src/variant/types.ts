@@ -1,12 +1,15 @@
 // F8 variant configuration — shape every variant app must provide.
-import type { ImageSourcePropType } from 'react-native';
 
 export type VariantId = 'seoul' | 'tokyo' | 'wedding' | 'mono' | 'cinema' | (string & {});
+
+// Either a require()'d module id (number) or a remote/file URI (string).
+// Matches what Skia's useImage and RN's <Image> source both accept.
+export type ImageAsset = number | string;
 
 export type OnboardingSlide = {
   title: string;
   body: string;
-  imageAsset?: ImageSourcePropType;
+  imageAsset?: ImageAsset;
 };
 
 export type AdjustmentValues = {
@@ -28,8 +31,8 @@ export type Preset = {
   name: string;
   bodyId: string;
   filmId: string;
-  thumbnail?: ImageSourcePropType | number;
-  lutAsset?: ImageSourcePropType | number;
+  thumbnail?: ImageAsset;
+  lutAsset?: ImageAsset;
   defaults: AdjustmentValues;
   isPremium: boolean;
 };

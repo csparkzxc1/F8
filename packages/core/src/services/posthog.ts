@@ -8,6 +8,11 @@ type Options = {
   enableSessionReplay?: boolean;
 };
 
+// PostHog 3.x expects JsonType-shaped properties; the analytics facade is
+// generic Record<string, unknown>. Bridge here at the SDK boundary.
+type CaptureProps = Parameters<PostHog['capture']>[1];
+type IdentifyTraits = Parameters<PostHog['identify']>[1];
+
 let client: PostHog | null = null;
 
 export function initPostHog(apiKey: string, options: Options = {}): PostHog {
@@ -18,8 +23,8 @@ export function initPostHog(apiKey: string, options: Options = {}): PostHog {
   });
 
   const adapter: AnalyticsAdapter = {
-    track: (event, props) => client?.capture(event, props),
-    identify: (id, traits) => client?.identify(id, traits),
+    track: (event, props) => client?.capture(event, props as CaptureProps),
+    identify: (id, traits) => client?.identify(id, traits as IdentifyTraits),
   };
   setAnalytics(adapter);
   return client;

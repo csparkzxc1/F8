@@ -1,7 +1,7 @@
 // F8 Seoul variant definition. All Seoul-specific copy & assets live here.
 import type { VariantConfig } from '@f8/core';
 import { commonPresets } from '@f8/presets-common';
-import { seoulPresets, seoulPremiumPacks } from '@f8/presets-seoul';
+import { seoulPresets, seoulPremiumPacks, seoulBodies, seoulFilms } from '@f8/presets-seoul';
 
 const F8_SEOUL_DESCRIPTION = `F8 Seoul은 100년 전 거리 사진의 거장 Weegee가 남긴 한 마디에서 시작합니다.
 
@@ -58,6 +58,8 @@ export const f8SeoulConfig: VariantConfig = {
   iconAssetId: 'icon-seoul',
   defaultPresets: [...commonPresets, ...seoulPresets],
   premiumPacks: seoulPremiumPacks,
+  bodies: seoulBodies,
+  films: seoulFilms,
   copy: {
     home: {
       title: 'F8 Seoul',

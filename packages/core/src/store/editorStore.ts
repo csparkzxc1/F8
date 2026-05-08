@@ -23,6 +23,9 @@ export type EditorState = {
   setPhoto: (uri: string | null) => void;
   setPreset: (preset: Preset | null) => void;
   setAdjustment: <K extends keyof AdjustmentValues>(key: K, value: AdjustmentValues[K]) => void;
+  // Apply many adjustment fields in one shot — single store update, single
+  // canvas re-render. Fields not in `partial` keep their current values.
+  mergeAdjustments: (partial: Partial<AdjustmentValues>) => void;
   reset: () => void;
 };
 
@@ -41,6 +44,8 @@ export const useEditorStore = create<EditorState>((set) => ({
     }),
   setAdjustment: (key, value) =>
     set((state) => ({ adjustments: { ...state.adjustments, [key]: value } })),
+  mergeAdjustments: (partial) =>
+    set((state) => ({ adjustments: { ...state.adjustments, ...partial } })),
   reset: () =>
     set({ photoUri: null, activePreset: null, adjustments: defaultAdjustments }),
 }));

@@ -55,6 +55,14 @@ export type VariantCopy = {
 
 export type VariantIapIds = Record<string, { ios: string; android: string }>;
 
+// One-line label pair used by BodyFilmPicker. Exposed at the variant level
+// so each variant can curate its own bodies/films table.
+export type PickerOption = {
+  id: string;
+  label: string;
+  subLabel?: string;
+};
+
 export type VariantConfig = {
   id: VariantId;
   appName: string;
@@ -65,6 +73,8 @@ export type VariantConfig = {
 
   defaultPresets: Preset[];
   premiumPacks: PresetPack[];
+  bodies?: PickerOption[];
+  films?: PickerOption[];
 
   copy: VariantCopy;
 

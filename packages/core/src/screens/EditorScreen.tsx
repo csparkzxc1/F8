@@ -23,9 +23,12 @@ import { PresetStrip } from '../components/editor/PresetStrip';
 import { CompareSlider } from '../components/editor/CompareSlider';
 import { useEditorStore } from '../store/editorStore';
 import { useToast } from '../components/ui/Toast';
+import { useVariant } from '../variant/VariantContext';
 import { saveSkImage } from '../services/saveImage';
 import { haptic } from '../services/haptics';
 import { track } from '../services/analytics';
+import { sampleHistogram } from '../engine/sampleHistogram';
+import { suggestAdjustments } from '../engine/autoAdjust';
 import type { RootStackParamList } from '../navigation/types';
 
 type Route = RouteProp<RootStackParamList, 'Editor'>;
@@ -38,12 +41,21 @@ export function EditorScreen() {
   const { width } = useWindowDimensions();
   const previewSize = width;
 
+  const variant = useVariant();
   const storedPhotoUri = useEditorStore((s) => s.photoUri);
   const adjustments = useEditorStore((s) => s.adjustments);
   const activePreset = useEditorStore((s) => s.activePreset);
+  const mergeAdjustments = useEditorStore((s) => s.mergeAdjustments);
   const reset = useEditorStore((s) => s.reset);
   const photoUri = route.params?.photoUri ?? storedPhotoUri;
   const showToast = useToast((s) => s.show);
+
+  const bodyLabel = activePreset
+    ? variant.bodies?.find((b) => b.id === activePreset.bodyId)?.label
+    : undefined;
+  const filmLabel = activePreset
+    ? variant.films?.find((f) => f.id === activePreset.filmId)?.label
+    : undefined;
 
   const image = useImage(photoUri ?? null);
   // useImage gracefully tolerates undefined (returns null) so the LUT pass
@@ -70,6 +82,29 @@ export function EditorScreen() {
       setSaving(false);
     }
   }, [image, saving, copy, showToast]);
+
+  const onAuto = useCallback(() => {
+    if (!image) return;
+    haptic.tap();
+    const histogram = sampleHistogram(image);
+    if (!histogram) {
+      showToast(copy.errors.loadPhoto, 'error');
+      return;
+    }
+    const suggested = suggestAdjustments(histogram);
+    // Only push the three fields autoAdjust actually computes — leave the
+    // active preset's other defaults untouched.
+    mergeAdjustments({
+      exposure: suggested.exposure,
+      shadows: suggested.shadows,
+      highlights: suggested.highlights,
+    });
+    track('auto_applied', {
+      exposure: suggested.exposure,
+      shadows: suggested.shadows,
+      highlights: suggested.highlights,
+    });
+  }, [image, mergeAdjustments, showToast, copy]);
 
   const onClose = useCallback(() => {
     reset();
@@ -107,16 +142,28 @@ export function EditorScreen() {
         <Pressable onPress={onClose} hitSlop={12}>
           <Text style={[styles.back, { color: theme.colors.textMuted }]}>{copy.common.cancel}</Text>
         </Pressable>
-        <Pressable onPress={() => setComparing((v) => !v)} hitSlop={12}>
-          <Text
-            style={[
-              styles.title,
-              { color: comparing ? theme.colors.accent : theme.colors.text },
-            ]}
-          >
-            {comparing ? copy.editor.original : copy.editor.f8}
-          </Text>
-        </Pressable>
+        <View style={styles.headerCenter}>
+          <Pressable onPress={() => setComparing((v) => !v)} hitSlop={12}>
+            <Text
+              style={[
+                styles.title,
+                { color: comparing ? theme.colors.accent : theme.colors.text },
+              ]}
+            >
+              {comparing ? copy.editor.original : copy.editor.f8}
+            </Text>
+          </Pressable>
+          <Pressable onPress={onAuto} hitSlop={12} disabled={!image}>
+            <Text
+              style={[
+                styles.auto,
+                { color: !image ? theme.colors.textDimmed : theme.colors.textMuted },
+              ]}
+            >
+              자동
+            </Text>
+          </Pressable>
+        </View>
         <Pressable onPress={onSave} hitSlop={12} disabled={!image || saving}>
           <Text
             style={[
@@ -152,6 +199,11 @@ export function EditorScreen() {
 
       <ScrollView style={styles.controls}>
         <PresetStrip />
+        {bodyLabel && filmLabel ? (
+          <Text style={[styles.bodyFilm, { color: theme.colors.textMuted }]}>
+            {bodyLabel} × {filmLabel}
+          </Text>
+        ) : null}
         <AdjustmentsPanel />
       </ScrollView>
     </SafeAreaView>
@@ -168,8 +220,19 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   back: { fontSize: 15, fontWeight: '500' },
+  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   title: { fontSize: 16, fontWeight: '700', letterSpacing: -0.2 },
+  auto: { fontSize: 13, fontWeight: '600', letterSpacing: -0.1 },
   save: { fontSize: 15, fontWeight: '700' },
+  bodyFilm: {
+    paddingHorizontal: 24,
+    paddingTop: 4,
+    paddingBottom: 8,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    fontVariant: ['tabular-nums'],
+  },
   preview: { alignSelf: 'center', backgroundColor: '#000' },
   placeholder: {
     flex: 1,

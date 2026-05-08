@@ -2,12 +2,9 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useTheme } from '../../theme/ThemeProvider';
+import type { PickerOption } from '../../variant/types';
 
-export type PickerOption = {
-  id: string;
-  label: string;
-  subLabel?: string;
-};
+export type { PickerOption };
 
 type Props = {
   bodies: PickerOption[];

@@ -8,6 +8,7 @@ export type {
   OnboardingSlide,
   Preset,
   PresetPack,
+  PickerOption,
   AdjustmentValues,
 } from './variant/types';
 
@@ -35,6 +36,7 @@ export {
   buildUniforms,
   buildHistogram,
   suggestAdjustments,
+  sampleHistogram,
   getLutEffect,
   getAdjustmentsEffect,
   getGrainEffect,

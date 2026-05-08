@@ -6,6 +6,7 @@ export type AnalyticsEvent =
   | 'photo_picked'
   | 'photo_shot'
   | 'preset_applied'
+  | 'auto_applied'
   | 'photo_saved'
   | 'pack_view'
   | 'pack_purchase_attempt'

@@ -16,11 +16,11 @@ const config: ExpoConfig = {
   },
   assetBundlePatterns: ['**/*'],
   ios: {
-    bundleIdentifier: 'com.yourco.f8.wedding',
+    bundleIdentifier: 'com.csparkzxc1.f8.wedding',
     supportsTablet: false,
   },
   android: {
-    package: 'com.yourco.f8.wedding',
+    package: 'com.csparkzxc1.f8.wedding',
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#0A0A0A',

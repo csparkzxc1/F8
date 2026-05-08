@@ -26,7 +26,7 @@ F8. Be there.`;
 export const f8WeddingConfig: VariantConfig = {
   id: 'wedding',
   appName: 'F8 Wedding',
-  bundleId: 'com.yourco.f8.wedding',
+  bundleId: 'com.csparkzxc1.f8.wedding',
   accentColor: '#F5E6D3',
   iconAssetId: 'icon-wedding',
   defaultPresets: [...commonPresets, ...weddingPresets],
@@ -59,8 +59,8 @@ export const f8WeddingConfig: VariantConfig = {
     },
   },
   iapProductIds: {
-    bride_tones: { ios: 'com.yourco.f8.wedding.bride', android: 'bride_tones' },
-    natural_light: { ios: 'com.yourco.f8.wedding.natural', android: 'natural_light' },
-    family_album: { ios: 'com.yourco.f8.wedding.family', android: 'family_album' },
+    bride_tones: { ios: 'com.csparkzxc1.f8.wedding.bride', android: 'bride_tones' },
+    natural_light: { ios: 'com.csparkzxc1.f8.wedding.natural', android: 'natural_light' },
+    family_album: { ios: 'com.csparkzxc1.f8.wedding.family', android: 'family_album' },
   },
 };

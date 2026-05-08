@@ -53,7 +53,7 @@ F8. Be there.`;
 export const f8SeoulConfig: VariantConfig = {
   id: 'seoul',
   appName: 'F8 Seoul',
-  bundleId: 'com.yourco.f8.seoul',
+  bundleId: 'com.csparkzxc1.f8.seoul',
   accentColor: '#E8C39E',
   iconAssetId: 'icon-seoul',
   defaultPresets: [...commonPresets, ...seoulPresets],
@@ -95,7 +95,7 @@ export const f8SeoulConfig: VariantConfig = {
     // v1.5 / v2 per the Filter Catalog roadmap — register their ids in
     // App Store Connect first, then add them here.
     vintage_korea: {
-      ios: 'com.yourco.f8.seoul.vintage_korea',
+      ios: 'com.csparkzxc1.f8.seoul.vintage_korea',
       android: 'vintage_korea',
     },
   },

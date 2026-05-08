@@ -26,7 +26,7 @@ F8. Be there.`;
 export const f8TokyoConfig: VariantConfig = {
   id: 'tokyo',
   appName: 'F8 Tokyo',
-  bundleId: 'com.yourco.f8.tokyo',
+  bundleId: 'com.csparkzxc1.f8.tokyo',
   accentColor: '#FF6B9D',
   iconAssetId: 'icon-tokyo',
   defaultPresets: [...commonPresets, ...tokyoPresets],
@@ -59,8 +59,8 @@ export const f8TokyoConfig: VariantConfig = {
     },
   },
   iapProductIds: {
-    neon_night: { ios: 'com.yourco.f8.tokyo.neon', android: 'neon_night' },
-    rainy_streets: { ios: 'com.yourco.f8.tokyo.rain', android: 'rainy_streets' },
-    shibuya_glow: { ios: 'com.yourco.f8.tokyo.shibuya', android: 'shibuya_glow' },
+    neon_night: { ios: 'com.csparkzxc1.f8.tokyo.neon', android: 'neon_night' },
+    rainy_streets: { ios: 'com.csparkzxc1.f8.tokyo.rain', android: 'rainy_streets' },
+    shibuya_glow: { ios: 'com.csparkzxc1.f8.tokyo.shibuya', android: 'shibuya_glow' },
   },
 };

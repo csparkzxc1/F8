@@ -16,11 +16,11 @@ const config: ExpoConfig = {
   },
   assetBundlePatterns: ['**/*'],
   ios: {
-    bundleIdentifier: 'com.yourco.f8.seoul',
+    bundleIdentifier: 'com.csparkzxc1.f8.seoul',
     supportsTablet: false,
   },
   android: {
-    package: 'com.yourco.f8.seoul',
+    package: 'com.csparkzxc1.f8.seoul',
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#0A0A0A',
@@ -52,6 +52,9 @@ const config: ExpoConfig = {
     typedRoutes: false,
   },
   extra: {
+    eas: {
+      projectId: '2b4694dd-6217-4c1f-bdc8-cdb3577e5148',
+    },
     // Inject via EAS secret POSTHOG_KEY_SEOUL or leave empty for dev.
     posthogKey: process.env.POSTHOG_KEY_SEOUL ?? '',
   },

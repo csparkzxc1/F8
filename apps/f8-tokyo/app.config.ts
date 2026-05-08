@@ -16,11 +16,11 @@ const config: ExpoConfig = {
   },
   assetBundlePatterns: ['**/*'],
   ios: {
-    bundleIdentifier: 'com.yourco.f8.tokyo',
+    bundleIdentifier: 'com.csparkzxc1.f8.tokyo',
     supportsTablet: false,
   },
   android: {
-    package: 'com.yourco.f8.tokyo',
+    package: 'com.csparkzxc1.f8.tokyo',
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#0A0A0A',

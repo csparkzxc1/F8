@@ -1,6 +1,7 @@
 // About: full brand story. The Weegee origin lives here, in F8 voice.
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useVariant } from '../variant/VariantContext';
 import { useTheme } from '../theme/ThemeProvider';

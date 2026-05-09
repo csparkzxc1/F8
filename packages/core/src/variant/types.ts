@@ -69,6 +69,9 @@ export type PickerOption = {
 export type VariantConfig = {
   id: VariantId;
   appName: string;
+  // Short city / theme label shown next to the F8 wordmark on Home.
+  // Decoupled from appName so the home header doesn't have to regex-strip "F8".
+  cityName: string;
   bundleId: string;
 
   accentColor: string;

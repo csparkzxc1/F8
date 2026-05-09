@@ -26,6 +26,7 @@ F8. Be there.`;
 export const f8TokyoConfig: VariantConfig = {
   id: 'tokyo',
   appName: 'F8 Tokyo',
+  cityName: 'Tokyo',
   bundleId: 'com.csparkzxc1.f8.tokyo',
   accentColor: '#FF6B9D',
   iconAssetId: 'icon-tokyo',

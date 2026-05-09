@@ -26,6 +26,7 @@ F8. Be there.`;
 export const f8WeddingConfig: VariantConfig = {
   id: 'wedding',
   appName: 'F8 Wedding',
+  cityName: 'Wedding',
   bundleId: 'com.csparkzxc1.f8.wedding',
   accentColor: '#F5E6D3',
   iconAssetId: 'icon-wedding',

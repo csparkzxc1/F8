@@ -53,6 +53,7 @@ F8. Be there.`;
 export const f8SeoulConfig: VariantConfig = {
   id: 'seoul',
   appName: 'F8 Seoul',
+  cityName: 'Seoul',
   bundleId: 'com.csparkzxc1.f8.seoul',
   accentColor: '#E8C39E',
   iconAssetId: 'icon-seoul',

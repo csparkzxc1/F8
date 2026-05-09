@@ -1,7 +1,7 @@
 // Factory that turns a VariantConfig into a full F8 App component.
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { VariantProvider } from './VariantContext';
 import { RootNavigator } from '../navigation/RootNavigator';
@@ -18,16 +18,16 @@ export function createF8App(config: VariantConfig) {
 
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <VariantProvider config={config}>
-          <ThemeProvider accentColor={config.accentColor}>
-            <View style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <VariantProvider config={config}>
+            <ThemeProvider accentColor={config.accentColor}>
               <NavigationContainer>
                 <RootNavigator />
               </NavigationContainer>
               <ToastHost />
-            </View>
-          </ThemeProvider>
-        </VariantProvider>
+            </ThemeProvider>
+          </VariantProvider>
+        </SafeAreaProvider>
       </GestureHandlerRootView>
     );
   };

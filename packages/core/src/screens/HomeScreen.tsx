@@ -1,6 +1,7 @@
 // Home: F8 wordmark + variant.copy.home. Shoot / Pick photo CTAs.
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVariant } from '../variant/VariantContext';
@@ -43,7 +44,7 @@ export function HomeScreen() {
           <View style={styles.brand}>
             <F8Logo size={28} color={theme.colors.text} />
             <Text style={[styles.variantName, { color: theme.colors.textMuted }]}>
-              {variant.appName.replace(/^F8\s*/, '')}
+              {variant.cityName}
             </Text>
           </View>
           <Pressable onPress={() => nav.navigate('Settings')} hitSlop={12}>

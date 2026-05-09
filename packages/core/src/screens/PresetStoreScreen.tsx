@@ -1,13 +1,13 @@
 // Preset store. Each PresetPack lists its films by name (no marketing puff).
 import React, { useEffect } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
   Pressable,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useVariant } from '../variant/VariantContext';

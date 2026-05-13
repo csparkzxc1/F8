@@ -47,11 +47,18 @@ export function HomeScreen() {
               {variant.cityName}
             </Text>
           </View>
-          <Pressable onPress={() => nav.navigate('Settings')} hitSlop={12}>
-            <Text style={[styles.settings, { color: theme.colors.textMuted }]}>
-              {copy.common.settings}
-            </Text>
-          </Pressable>
+          <View style={styles.topRight}>
+            <Pressable onPress={() => nav.navigate('PresetStore')} hitSlop={12}>
+              <Text style={[styles.settings, { color: theme.colors.accent }]}>
+                ✨
+              </Text>
+            </Pressable>
+            <Pressable onPress={() => nav.navigate('Settings')} hitSlop={12}>
+              <Text style={[styles.settings, { color: theme.colors.textMuted }]}>
+                {copy.common.settings}
+              </Text>
+            </Pressable>
+          </View>
         </View>
         <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
           {variant.copy.home.subtitle}
@@ -94,6 +101,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   settings: { fontSize: 14, fontWeight: '500' },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   brand: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
   variantName: { fontSize: 18, fontWeight: '500', letterSpacing: -0.3 },
   subtitle: { fontSize: 14 },

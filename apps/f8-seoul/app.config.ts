@@ -18,9 +18,18 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.csparkzxc1.f8.seoul',
     supportsTablet: false,
+    infoPlist: {
+      NSCameraUsageDescription:
+        'F8은 필름 카메라처럼 촬영하기 위해 카메라 권한이 필요합니다.',
+      NSPhotoLibraryUsageDescription:
+        'F8은 사진을 불러오고 저장하기 위해 사진 권한이 필요합니다.',
+      NSPhotoLibraryAddUsageDescription:
+        'F8은 보정된 사진을 갤러리에 저장하기 위해 권한이 필요합니다.',
+    },
   },
   android: {
     package: 'com.csparkzxc1.f8.seoul',
+    permissions: ['CAMERA', 'READ_MEDIA_IMAGES', 'WRITE_EXTERNAL_STORAGE'],
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#0A0A0A',
@@ -28,6 +37,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-dev-client',
+    'react-native-iap',
     [
       'expo-image-picker',
       {
@@ -44,7 +54,10 @@ const config: ExpoConfig = {
     [
       'react-native-vision-camera',
       {
-        cameraPermissionText: '필름 카메라처럼 그 자리를 담기 위해 카메라 접근이 필요합니다.',
+        cameraPermissionText:
+          'F8은 필름 카메라처럼 촬영하기 위해 카메라 권한이 필요합니다.',
+        enableMicrophonePermission: false,
+        enableLocation: false,
       },
     ],
   ],

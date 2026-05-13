@@ -18,9 +18,18 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.csparkzxc1.f8.tokyo',
     supportsTablet: false,
+    infoPlist: {
+      NSCameraUsageDescription:
+        'F8はフィルムカメラのように撮影するためにカメラへのアクセスが必要です。',
+      NSPhotoLibraryUsageDescription:
+        'F8は写真を読み込み・保存するために写真へのアクセスが必要です。',
+      NSPhotoLibraryAddUsageDescription:
+        'F8は補正した写真をギャラリーに保存するために権限が必要です。',
+    },
   },
   android: {
     package: 'com.csparkzxc1.f8.tokyo',
+    permissions: ['CAMERA', 'READ_MEDIA_IMAGES', 'WRITE_EXTERNAL_STORAGE'],
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#0A0A0A',
@@ -28,6 +37,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-dev-client',
+    'react-native-iap',
     [
       'expo-image-picker',
       { photosPermission: 'シブヤの夜を残すために、写真へのアクセスが必要です。' },
@@ -41,7 +51,12 @@ const config: ExpoConfig = {
     ],
     [
       'react-native-vision-camera',
-      { cameraPermissionText: 'その場に立ち会うために、カメラへのアクセスが必要です。' },
+      {
+        cameraPermissionText:
+          'F8はフィルムカメラのように撮影するためにカメラへのアクセスが必要です。',
+        enableMicrophonePermission: false,
+        enableLocation: false,
+      },
     ],
   ],
   experiments: { typedRoutes: false },

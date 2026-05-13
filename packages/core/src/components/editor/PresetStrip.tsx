@@ -1,6 +1,6 @@
-// Horizontal preset picker. Shows variant.defaultPresets plus presets from
-// any premium pack the user already owns. Tap selects (and applies the
-// preset's defaults), tap again deselects.
+// Horizontal preset picker. Always shows every preset (defaults + every
+// premium pack). Locked premium tiles get a lock badge and route to the
+// store on tap; unlocked tiles toggle the active preset.
 import React, { useMemo } from 'react';
 import {
   FlatList,
@@ -11,6 +11,8 @@ import {
   View,
   type ListRenderItem,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVariant } from '../../variant/VariantContext';
 import { useEditorStore } from '../../store/editorStore';
 import { useIapStore, isPackUnlocked } from '../../store/iapStore';
@@ -19,26 +21,38 @@ import { t } from '../../i18n';
 import { haptic } from '../../services/haptics';
 import { track } from '../../services/analytics';
 import type { Preset } from '../../variant/types';
+import type { RootStackParamList } from '../../navigation/types';
 
 const TILE = 72;
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+type StripItem = Preset & { locked: boolean };
 
 export function PresetStrip() {
   const theme = useTheme();
   const variant = useVariant();
+  const nav = useNavigation<Nav>();
   const active = useEditorStore((s) => s.activePreset);
   const setPreset = useEditorStore((s) => s.setPreset);
   const ownedIds = useIapStore((s) => s.ownedPackIds);
   const copy = t();
 
-  const presets: Preset[] = useMemo(() => {
-    const unlocked = variant.premiumPacks
-      .filter((pack) => isPackUnlocked(pack.id, variant.iapProductIds, ownedIds))
-      .flatMap((pack) => pack.presets);
-    return [...variant.defaultPresets, ...unlocked];
+  const items: StripItem[] = useMemo(() => {
+    const defaults: StripItem[] = variant.defaultPresets.map((p) => ({ ...p, locked: false }));
+    const fromPacks: StripItem[] = variant.premiumPacks.flatMap((pack) => {
+      const unlocked = isPackUnlocked(pack.id, variant.iapProductIds, ownedIds);
+      return pack.presets.map((p) => ({ ...p, locked: !unlocked }));
+    });
+    return [...defaults, ...fromPacks];
   }, [variant.defaultPresets, variant.premiumPacks, variant.iapProductIds, ownedIds]);
 
-  const onTap = (item: Preset, isActive: boolean) => {
+  const onTap = (item: StripItem, isActive: boolean) => {
     haptic.tap();
+    if (item.locked) {
+      nav.navigate('PresetStore');
+      return;
+    }
     if (isActive) {
       setPreset(null);
       return;
@@ -47,7 +61,7 @@ export function PresetStrip() {
     track('preset_applied', { id: item.id, premium: item.isPremium });
   };
 
-  const renderItem: ListRenderItem<Preset> = ({ item }) => {
+  const renderItem: ListRenderItem<StripItem> = ({ item }) => {
     const isActive = active?.id === item.id;
     const presetCopy = (copy.presets as Record<string, string>)[item.id];
     return (
@@ -57,6 +71,7 @@ export function PresetStrip() {
           styles.tile,
           {
             borderColor: isActive ? theme.colors.accent : 'transparent',
+            opacity: item.locked ? 0.55 : 1,
           },
         ]}
       >
@@ -79,7 +94,11 @@ export function PresetStrip() {
             {presetCopy}
           </Text>
         ) : null}
-        {item.isPremium ? (
+        {item.locked ? (
+          <View style={[styles.badge, { borderColor: theme.colors.accent, backgroundColor: theme.colors.bg }]}>
+            <Text style={[styles.badgeText, { color: theme.colors.accent }]}>🔒</Text>
+          </View>
+        ) : item.isPremium ? (
           <View style={[styles.badge, { borderColor: theme.colors.accent }]}>
             <Text style={[styles.badgeText, { color: theme.colors.accent }]}>+</Text>
           </View>
@@ -88,7 +107,7 @@ export function PresetStrip() {
     );
   };
 
-  if (presets.length === 0) {
+  if (items.length === 0) {
     return (
       <View style={styles.empty}>
         <Text style={[styles.emptyText, { color: theme.colors.textDimmed }]}>
@@ -100,7 +119,7 @@ export function PresetStrip() {
 
   return (
     <FlatList
-      data={presets}
+      data={items}
       keyExtractor={(p) => p.id}
       horizontal
       showsHorizontalScrollIndicator={false}

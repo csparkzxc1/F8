@@ -21,6 +21,7 @@ import { FilteredImage, type FilteredImageHandle } from '../components/editor/Fi
 import { AdjustmentsPanel } from '../components/editor/AdjustmentsPanel';
 import { PresetStrip } from '../components/editor/PresetStrip';
 import { CompareSlider } from '../components/editor/CompareSlider';
+import { IntensitySlider } from '../components/editor/IntensitySlider';
 import { useEditorStore } from '../store/editorStore';
 import { useToast } from '../components/ui/Toast';
 import { useVariant } from '../variant/VariantContext';
@@ -32,6 +33,15 @@ import { suggestAdjustments } from '../engine/autoAdjust';
 import type { RootStackParamList } from '../navigation/types';
 
 type Route = RouteProp<RootStackParamList, 'Editor'>;
+
+type EditorTab = 'film' | 'adjust' | 'overlay' | 'body';
+
+const TAB_LABELS: Array<{ id: EditorTab; label: string }> = [
+  { id: 'film', label: '필름' },
+  { id: 'adjust', label: '조정' },
+  { id: 'overlay', label: '오버레이' },
+  { id: 'body', label: '바디' },
+];
 
 export function EditorScreen() {
   const theme = useTheme();
@@ -46,9 +56,11 @@ export function EditorScreen() {
   const adjustments = useEditorStore((s) => s.adjustments);
   const activePreset = useEditorStore((s) => s.activePreset);
   const mergeAdjustments = useEditorStore((s) => s.mergeAdjustments);
+  const setAdjustment = useEditorStore((s) => s.setAdjustment);
   const reset = useEditorStore((s) => s.reset);
   const photoUri = route.params?.photoUri ?? storedPhotoUri;
   const showToast = useToast((s) => s.show);
+  const [tab, setTab] = useState<EditorTab>('film');
 
   const bodyLabel = activePreset
     ? variant.bodies?.find((b) => b.id === activePreset.bodyId)?.label
@@ -197,14 +209,59 @@ export function EditorScreen() {
         )}
       </View>
 
+      {activePreset ? (
+        <View style={styles.intensity}>
+          <IntensitySlider
+            label="강도"
+            value={adjustments.intensity}
+            min={0}
+            max={100}
+            onChange={(v) => setAdjustment('intensity', v)}
+          />
+        </View>
+      ) : null}
+
+      <View style={[styles.tabs, { borderTopColor: theme.colors.border }]}>
+        {TAB_LABELS.map((t) => {
+          const isActive = tab === t.id;
+          return (
+            <Pressable
+              key={t.id}
+              onPress={() => setTab(t.id)}
+              style={[styles.tab, isActive && { borderTopColor: theme.colors.accent }]}
+            >
+              <Text
+                style={[
+                  styles.tabLabel,
+                  { color: isActive ? theme.colors.text : theme.colors.textMuted },
+                ]}
+              >
+                {t.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <ScrollView style={styles.controls}>
-        <PresetStrip />
-        {bodyLabel && filmLabel ? (
-          <Text style={[styles.bodyFilm, { color: theme.colors.textMuted }]}>
-            {bodyLabel} × {filmLabel}
-          </Text>
+        {tab === 'film' ? (
+          <>
+            <PresetStrip />
+            {bodyLabel && filmLabel ? (
+              <Text style={[styles.bodyFilm, { color: theme.colors.textMuted }]}>
+                {bodyLabel} × {filmLabel}
+              </Text>
+            ) : null}
+          </>
         ) : null}
-        <AdjustmentsPanel />
+        {tab === 'adjust' ? <AdjustmentsPanel /> : null}
+        {tab === 'overlay' || tab === 'body' ? (
+          <View style={styles.placeholderPanel}>
+            <Text style={[styles.placeholderText, { color: theme.colors.textDimmed }]}>
+              준비 중
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -243,4 +300,21 @@ const styles = StyleSheet.create({
   },
   placeholderText: { fontSize: 14 },
   controls: { flex: 1 },
+  intensity: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 4 },
+  tabs: {
+    flexDirection: 'row',
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderTopWidth: 2,
+    borderTopColor: 'transparent',
+  },
+  tabLabel: { fontSize: 13, fontWeight: '600', letterSpacing: -0.2 },
+  placeholderPanel: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
 });

@@ -33,16 +33,16 @@ export type Dict = {
   // One-line poetic blurb shown under each preset name.
   presets: {
     noeul: string;
-    daybreak: string;
-    first_snow: string;
-    childhood: string;
-    summer_night: string;
-    holiday: string;
-    rainy_days: string;
-    caffeine: string;
-    stranger: string;
-    soft_spring: string;
-    stillness: string;
-    camellia: string;
+    saebyeok: string;
+    cheotnun: string;
+    yunyeon: string;
+    yeoreumbam: string;
+    hyuil: string;
+    ugi: string;
+    caffein: string;
+    ibangin: string;
+    bomnal: string;
+    goyo: string;
+    dongbaek: string;
   };
 };

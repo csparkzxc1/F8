@@ -54,6 +54,7 @@ export const f8SeoulConfig: VariantConfig = {
   id: 'seoul',
   appName: 'F8 Seoul',
   cityName: 'Seoul',
+  // TODO: Replace 'yourco' with actual reverse-domain before launch
   bundleId: 'com.csparkzxc1.f8.seoul',
   accentColor: '#E8C39E',
   iconAssetId: 'icon-seoul',

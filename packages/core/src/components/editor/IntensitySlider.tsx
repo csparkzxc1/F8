@@ -62,6 +62,9 @@ export function IntensitySlider({ label, value, min, max, onChange, formatValue 
       <View
         onLayout={onLayout}
         {...responder.panHandlers}
+        accessibilityRole="adjustable"
+        accessibilityLabel={label}
+        accessibilityValue={{ min, max, now: Math.round(value), text: valueStr }}
         style={[styles.track, { backgroundColor: theme.colors.border }]}
       >
         <View

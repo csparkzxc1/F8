@@ -3,6 +3,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import Constants from 'expo-constants';
 import { useVariant } from '../variant/VariantContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { F8Logo } from '../components/brand/F8Logo';
@@ -15,12 +16,22 @@ export function AboutScreen() {
   const nav = useNavigation();
   const copy = t();
 
+  const version =
+    Constants.expoConfig?.version ?? Constants.manifest2?.extra?.expoClient?.version ?? '0.1.0';
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => nav.goBack()} hitSlop={12}>
+        <Pressable
+          onPress={() => nav.goBack()}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={copy.common.cancel}
+        >
           <Text style={[styles.back, { color: theme.colors.textMuted }]}>{copy.common.cancel}</Text>
         </Pressable>
+        <Text style={[styles.headerTitle, { color: theme.colors.textMuted }]}>About</Text>
+        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -56,10 +67,22 @@ export function AboutScreen() {
           AI 합성이나 단순 톤커브가 아닌, 진짜 필름의 색.
         </Section>
 
+        <Section title="LUT 출처" theme={theme}>
+          현재 빌드는 자체 제작 파라메트릭 LUT를 사용합니다.
+          실제 필름 스캔 LUT 도입 시 라이선스와 출처를 이 자리에 명시합니다.
+        </Section>
+
+        <Section title="만든 사람들" theme={theme}>
+          기획·디자인·엔지니어링. 서울에서.
+        </Section>
+
         <View style={[styles.footer, { borderColor: theme.colors.border }]}>
           <F8Logo size={20} color={theme.colors.textMuted} />
           <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
-            {variant.appName} · v0.1.0
+            {variant.appName} · v{version}
+          </Text>
+          <Text style={[styles.footerText, { color: theme.colors.textDimmed }]}>
+            Made in Seoul
           </Text>
         </View>
       </ScrollView>
@@ -86,7 +109,15 @@ function Section({
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingVertical: 12 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  headerTitle: { fontSize: 12, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase' },
+  headerSpacer: { width: 40 },
   back: { fontSize: 15, fontWeight: '500' },
   content: { paddingHorizontal: 24, paddingBottom: 40, gap: 24 },
   heroBlock: { paddingTop: 16, paddingBottom: 8, alignItems: 'flex-start' },

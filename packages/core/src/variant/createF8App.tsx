@@ -7,26 +7,30 @@ import { VariantProvider } from './VariantContext';
 import { RootNavigator } from '../navigation/RootNavigator';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { ToastHost } from '../components/ui/Toast';
-import { track } from '../services/analytics';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
+import { track, setVariantContext } from '../services/analytics';
 import type { VariantConfig } from './types';
 
 export function createF8App(config: VariantConfig) {
   return function F8App() {
     useEffect(() => {
-      track('app_open', { variant: config.id, app: config.appName });
+      setVariantContext(config.id);
+      track('app_open', { app: config.appName });
     }, []);
 
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <VariantProvider config={config}>
-            <ThemeProvider accentColor={config.accentColor}>
-              <NavigationContainer>
-                <RootNavigator />
-              </NavigationContainer>
-              <ToastHost />
-            </ThemeProvider>
-          </VariantProvider>
+          <ErrorBoundary>
+            <VariantProvider config={config}>
+              <ThemeProvider accentColor={config.accentColor}>
+                <NavigationContainer>
+                  <RootNavigator />
+                </NavigationContainer>
+                <ToastHost />
+              </ThemeProvider>
+            </VariantProvider>
+          </ErrorBoundary>
         </SafeAreaProvider>
       </GestureHandlerRootView>
     );

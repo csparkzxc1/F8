@@ -1,37 +1,66 @@
-// Settings. Restore purchases, About link, terms/privacy placeholders.
+// Settings. Restore purchases, terms / privacy / contact links, About,
+// brand version at the foot. URLs are placeholder constants; swap in the
+// real ones before submission.
 import React from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Constants from 'expo-constants';
 import { useTheme } from '../theme/ThemeProvider';
+import { useVariant } from '../variant/VariantContext';
 import { useIapStore } from '../store/iapStore';
 import { useToast } from '../components/ui/Toast';
+import { track } from '../services/analytics';
+import { haptic } from '../services/haptics';
 import { t } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Settings'>;
 
+// TODO: replace with the real public URLs before launch.
+const TERMS_URL = 'https://f8.app/terms';
+const PRIVACY_URL = 'https://f8.app/privacy';
+const CONTACT_MAIL = 'mailto:hello@f8.app';
+
 export function SettingsScreen() {
   const theme = useTheme();
   const nav = useNavigation<Nav>();
+  const variant = useVariant();
   const copy = t();
   const restore = useIapStore((s) => s.restore);
   const showToast = useToast((s) => s.show);
 
+  const version =
+    Constants.expoConfig?.version ?? Constants.manifest2?.extra?.expoClient?.version ?? '0.1.0';
+
   async function onRestore() {
-    await restore();
-    showToast('복원이 완료되었습니다.');
+    haptic.tap();
+    track('iap_restored');
+    try {
+      await restore();
+      showToast('보유 항목을 복원했습니다.');
+    } catch {
+      showToast('복원하지 못했습니다.', 'error');
+    }
   }
 
   function openUrl(url: string) {
-    Linking.openURL(url).catch(() => undefined);
+    haptic.tap();
+    Linking.openURL(url).catch(() => {
+      showToast('링크를 열지 못했습니다.', 'error');
+    });
   }
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
       <View style={styles.header}>
-        <Pressable onPress={() => nav.goBack()} hitSlop={12}>
+        <Pressable
+          onPress={() => nav.goBack()}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={copy.common.cancel}
+        >
           <Text style={[styles.back, { color: theme.colors.textMuted }]}>{copy.common.cancel}</Text>
         </Pressable>
         <Text style={[styles.title, { color: theme.colors.text }]}>{copy.common.settings}</Text>
@@ -49,22 +78,21 @@ export function SettingsScreen() {
         </Section>
 
         <Section theme={theme} label="문서">
-          <Row
-            theme={theme}
-            label="이용약관"
-            onPress={() => openUrl('https://f8.app/terms')}
-          />
+          <Row theme={theme} label="이용약관" onPress={() => openUrl(TERMS_URL)} external />
           <Row
             theme={theme}
             label="개인정보 처리방침"
-            onPress={() => openUrl('https://f8.app/privacy')}
+            onPress={() => openUrl(PRIVACY_URL)}
+            external
           />
-          <Row
-            theme={theme}
-            label="문의"
-            onPress={() => openUrl('mailto:hello@f8.app')}
-          />
+          <Row theme={theme} label="문의하기" onPress={() => openUrl(CONTACT_MAIL)} external />
         </Section>
+
+        <View style={styles.versionBlock}>
+          <Text style={[styles.versionText, { color: theme.colors.textDimmed }]}>
+            {variant.appName}  ·  v{version}
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -91,21 +119,27 @@ function Row({
   label,
   onPress,
   theme,
+  external,
 }: {
   label: string;
   onPress: () => void;
   theme: ReturnType<typeof useTheme>;
+  external?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={({ pressed }) => [
         styles.row,
         { backgroundColor: pressed ? theme.colors.surfaceElevated : 'transparent' },
       ]}
     >
       <Text style={[styles.rowLabel, { color: theme.colors.text }]}>{label}</Text>
-      <Text style={[styles.rowChevron, { color: theme.colors.textDimmed }]}>›</Text>
+      <Text style={[styles.rowChevron, { color: theme.colors.textDimmed }]}>
+        {external ? '↗' : '›'}
+      </Text>
     </Pressable>
   );
 }
@@ -139,5 +173,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   rowLabel: { fontSize: 15, fontWeight: '500' },
-  rowChevron: { fontSize: 22, fontWeight: '300' },
+  rowChevron: { fontSize: 18, fontWeight: '400' },
+  versionBlock: { alignItems: 'center', paddingVertical: 32 },
+  versionText: { fontSize: 12, fontVariant: ['tabular-nums'] },
 });

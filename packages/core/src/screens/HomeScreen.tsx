@@ -48,12 +48,22 @@ export function HomeScreen() {
             </Text>
           </View>
           <View style={styles.topRight}>
-            <Pressable onPress={() => nav.navigate('PresetStore')} hitSlop={12}>
+            <Pressable
+              onPress={() => nav.navigate('PresetStore')}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="프리셋 스토어"
+            >
               <Text style={[styles.settings, { color: theme.colors.accent }]}>
                 ✨
               </Text>
             </Pressable>
-            <Pressable onPress={() => nav.navigate('Settings')} hitSlop={12}>
+            <Pressable
+              onPress={() => nav.navigate('Settings')}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={copy.common.settings}
+            >
               <Text style={[styles.settings, { color: theme.colors.textMuted }]}>
                 {copy.common.settings}
               </Text>
@@ -68,12 +78,16 @@ export function HomeScreen() {
       <View style={styles.actions}>
         <Pressable
           onPress={onShoot}
+          accessibilityRole="button"
+          accessibilityLabel={copy.home.shoot}
           style={[styles.primary, { backgroundColor: theme.colors.accent }]}
         >
           <Text style={[styles.primaryLabel, { color: theme.colors.bg }]}>{copy.home.shoot}</Text>
         </Pressable>
         <Pressable
           onPress={onPick}
+          accessibilityRole="button"
+          accessibilityLabel={copy.home.pickPhoto}
           style={[styles.secondary, { borderColor: theme.colors.border }]}
         >
           <Text style={[styles.secondaryLabel, { color: theme.colors.text }]}>

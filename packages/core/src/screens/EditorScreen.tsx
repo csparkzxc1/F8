@@ -191,7 +191,14 @@ export function EditorScreen() {
           <Text style={[styles.back, { color: theme.colors.textMuted }]}>{copy.common.cancel}</Text>
         </Pressable>
         <View style={styles.headerCenter}>
-          <Pressable onPress={onCompareToggle} hitSlop={12} disabled={!image}>
+          <Pressable
+            onPress={onCompareToggle}
+            hitSlop={12}
+            disabled={!image}
+            accessibilityRole="button"
+            accessibilityLabel={copy.editor.compare}
+            accessibilityState={{ selected: comparing, disabled: !image }}
+          >
             <Text
               style={[
                 styles.title,
@@ -207,7 +214,13 @@ export function EditorScreen() {
               {copy.editor.compare}
             </Text>
           </Pressable>
-          <Pressable onPress={onAuto} hitSlop={12} disabled={!image}>
+          <Pressable
+            onPress={onAuto}
+            hitSlop={12}
+            disabled={!image}
+            accessibilityRole="button"
+            accessibilityLabel={copy.editor.auto}
+          >
             <Text
               style={[
                 styles.auto,
@@ -219,7 +232,13 @@ export function EditorScreen() {
           </Pressable>
         </View>
         <View style={styles.headerRight}>
-          <Pressable onPress={onShare} hitSlop={12} disabled={!shareEnabled}>
+          <Pressable
+            onPress={onShare}
+            hitSlop={12}
+            disabled={!shareEnabled}
+            accessibilityRole="button"
+            accessibilityLabel={copy.editor.share}
+          >
             <Text
               style={[
                 styles.share,
@@ -229,7 +248,13 @@ export function EditorScreen() {
               {copy.editor.share}
             </Text>
           </Pressable>
-          <Pressable onPress={onSave} hitSlop={12} disabled={!saveEnabled}>
+          <Pressable
+            onPress={onSave}
+            hitSlop={12}
+            disabled={!saveEnabled}
+            accessibilityRole="button"
+            accessibilityLabel={copy.common.save}
+          >
             <Text
               style={[
                 styles.save,

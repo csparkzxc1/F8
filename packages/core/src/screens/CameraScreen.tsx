@@ -207,7 +207,12 @@ export function CameraScreen() {
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
         <View style={styles.top}>
-          <Pressable onPress={() => nav.goBack()} hitSlop={12}>
+          <Pressable
+            onPress={() => nav.goBack()}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={copy.common.cancel}
+          >
             <Text style={[styles.iconText, { color: '#FFFFFF' }]}>✕</Text>
           </Pressable>
           <View style={styles.topCenter}>
@@ -218,13 +223,23 @@ export function CameraScreen() {
           </View>
           <View style={styles.topRight}>
             {hasFlash ? (
-              <Pressable onPress={onCycleFlash} hitSlop={10}>
+              <Pressable
+                onPress={onCycleFlash}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={`플래시 ${flash}`}
+              >
                 <Text style={[styles.iconText, { color: flash === 'off' ? '#888' : '#FFD66B' }]}>
                   {flash === 'auto' ? 'A' : flash === 'on' ? '⚡' : '⚡̸'}
                 </Text>
               </Pressable>
             ) : null}
-            <Pressable onPress={onFlipFacing} hitSlop={10}>
+            <Pressable
+              onPress={onFlipFacing}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="카메라 전환"
+            >
               <Text style={[styles.iconText, { color: '#FFFFFF' }]}>↺</Text>
             </Pressable>
           </View>
@@ -284,6 +299,9 @@ export function CameraScreen() {
           <Pressable
             onPress={onShutter}
             disabled={shooting}
+            accessibilityRole="button"
+            accessibilityLabel="셔터"
+            accessibilityHint="사진을 촬영합니다"
             style={[
               styles.shutter,
               { borderColor: '#FFFFFF', opacity: shooting ? 0.6 : 1 },
@@ -298,6 +316,8 @@ export function CameraScreen() {
               setGridOn((v) => !v);
             }}
             hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={gridOn ? '그리드 끄기' : '그리드 켜기'}
             style={styles.gridBtn}
           >
             <Text style={[styles.iconText, { color: gridOn ? theme.colors.accent : '#888' }]}>

@@ -26,6 +26,7 @@ export { CompareSlider } from './components/editor/CompareSlider';
 export { BodyFilmPicker } from './components/editor/BodyFilmPicker';
 
 export { ToastHost, useToast } from './components/ui/Toast';
+export { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 export { ThemeProvider, useTheme, baseColors, variantAccents, typography, fontFamily } from './theme';
 
@@ -73,6 +74,7 @@ export {
   track,
   identify,
   setAnalytics,
+  setVariantContext,
   initPostHog,
   getPostHog,
   normalizeImage,

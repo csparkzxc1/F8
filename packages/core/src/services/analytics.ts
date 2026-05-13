@@ -8,6 +8,7 @@ export type AnalyticsEvent =
   | 'preset_applied'
   | 'auto_applied'
   | 'photo_saved'
+  | 'photo_shared'
   | 'pack_view'
   | 'pack_purchase_attempt'
   | 'pack_purchase_success'

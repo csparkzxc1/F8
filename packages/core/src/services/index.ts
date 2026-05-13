@@ -1,5 +1,7 @@
 export * from './imagePicker';
 export * from './saveImage';
+export * from './savePhoto';
+export * from './sharePhoto';
 export * from './iap';
 export * from './haptics';
 export * from './analytics';

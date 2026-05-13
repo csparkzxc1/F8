@@ -2,8 +2,11 @@
 // adjustments → LUT → grain → lightleak. Each pass is gated by an "is-active"
 // check so that, on low-spec devices, idle passes (e.g. grain at 0) are
 // completely skipped instead of wasting fragment cycles.
-import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+//
+// Long-press anywhere on the canvas reveals the original 1:1. Independent of
+// the CompareSlider — both can be active at once.
+import React, { forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 import {
   Canvas,
   Fill,
@@ -19,6 +22,7 @@ import {
   getLutEffect,
 } from '../../engine/shaders';
 import { buildUniforms } from '../../engine/applyFilter';
+import { haptic } from '../../services/haptics';
 import type { AdjustmentValues } from '../../variant/types';
 
 type Props = {
@@ -39,6 +43,7 @@ export const FilteredImage = forwardRef<FilteredImageHandle, Props>(function Fil
   ref,
 ) {
   const canvasRef = useCanvasRef();
+  const [holding, setHolding] = useState(false);
 
   const uniforms = useMemo(
     () => buildUniforms(adjustments, [width, height], seed),
@@ -55,56 +60,74 @@ export const FilteredImage = forwardRef<FilteredImageHandle, Props>(function Fil
 
   // Per-pass gates. A pass with all uniforms at 0 is a no-op — drop it from
   // the shader chain entirely so low-spec GPUs don't pay the sample cost.
-  const grainOn = uniforms.grain.amount > 0.001;
+  // While `holding`, skip every pass and render the raw source.
+  const grainOn = !holding && uniforms.grain.amount > 0.001;
   const leakOn =
-    uniforms.lightleak.leakAmount > 0.001 ||
-    uniforms.lightleak.vignetteAmount > 0.001 ||
-    uniforms.lightleak.halation > 0.001;
-  const lutOn = !!lut && uniforms.lut.intensity > 0.001;
+    !holding &&
+    (uniforms.lightleak.leakAmount > 0.001 ||
+      uniforms.lightleak.vignetteAmount > 0.001 ||
+      uniforms.lightleak.halation > 0.001);
+  const lutOn = !holding && !!lut && uniforms.lut.intensity > 0.001;
 
-  const adj = getAdjustmentsEffect();
-
-  // Build the chain bottom-up: source → adjustments → [lut] → [grain] → [leak].
-  let chain = (
-    <Shader source={adj} uniforms={uniforms.adjustments}>
-      <ImageShader image={image} fit="cover" rect={{ x: 0, y: 0, width, height }} />
-    </Shader>
-  );
-
-  if (lutOn && lut) {
-    const lutEff = getLutEffect();
+  let chain: React.ReactNode;
+  if (holding) {
+    chain = <ImageShader image={image} fit="cover" rect={{ x: 0, y: 0, width, height }} />;
+  } else {
+    const adj = getAdjustmentsEffect();
     chain = (
-      <Shader source={lutEff} uniforms={uniforms.lut}>
-        {chain}
-        <ImageShader image={lut} fit="fill" rect={{ x: 0, y: 0, width: 512, height: 512 }} />
+      <Shader source={adj} uniforms={uniforms.adjustments}>
+        <ImageShader image={image} fit="cover" rect={{ x: 0, y: 0, width, height }} />
       </Shader>
     );
-  }
 
-  if (grainOn) {
-    const grainEff = getGrainEffect();
-    chain = (
-      <Shader source={grainEff} uniforms={uniforms.grain}>
-        {chain}
-      </Shader>
-    );
-  }
+    if (lutOn && lut) {
+      const lutEff = getLutEffect();
+      chain = (
+        <Shader source={lutEff} uniforms={uniforms.lut}>
+          {chain}
+          <ImageShader image={lut} fit="fill" rect={{ x: 0, y: 0, width: 512, height: 512 }} />
+        </Shader>
+      );
+    }
 
-  if (leakOn) {
-    const leakEff = getLightleakEffect();
-    chain = (
-      <Shader source={leakEff} uniforms={uniforms.lightleak}>
-        {chain}
-      </Shader>
-    );
+    if (grainOn) {
+      const grainEff = getGrainEffect();
+      chain = (
+        <Shader source={grainEff} uniforms={uniforms.grain}>
+          {chain}
+        </Shader>
+      );
+    }
+
+    if (leakOn) {
+      const leakEff = getLightleakEffect();
+      chain = (
+        <Shader source={leakEff} uniforms={uniforms.lightleak}>
+          {chain}
+        </Shader>
+      );
+    }
   }
 
   return (
-    <View style={[styles.wrap, { width, height }]}>
+    <Pressable
+      delayLongPress={300}
+      onLongPress={() => {
+        haptic.tap();
+        setHolding(true);
+      }}
+      onPressOut={() => {
+        if (holding) {
+          haptic.tap();
+          setHolding(false);
+        }
+      }}
+      style={[styles.wrap, { width, height }]}
+    >
       <Canvas ref={canvasRef} style={{ width, height }}>
         <Fill>{chain}</Fill>
       </Canvas>
-    </View>
+    </Pressable>
   );
 });
 

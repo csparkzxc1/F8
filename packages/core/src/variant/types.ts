@@ -1,5 +1,8 @@
 // F8 variant configuration — shape every variant app must provide.
 
+// `string & Record<never, never>` keeps autocomplete on the literal union
+// while still permitting any string at the call site.
+// eslint-disable-next-line @typescript-eslint/ban-types
 export type VariantId = 'seoul' | 'tokyo' | 'wedding' | 'mono' | 'cinema' | (string & {});
 
 // Either a require()'d module id (number) or a remote/file URI (string).

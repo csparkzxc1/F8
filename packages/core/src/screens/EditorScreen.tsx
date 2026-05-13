@@ -1,4 +1,6 @@
-// Editor: Skia preview, preset strip, compare slider, adjustments, save flow.
+// Editor: Skia preview, preset strip, compare/share/save header, four bottom
+// tabs (film / adjust / overlay / body) feeding adjustments into the shader
+// chain. The "F8 Seoul"-style album name on save comes from variant.appName.
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View,
@@ -19,13 +21,15 @@ import { useTheme } from '../theme/ThemeProvider';
 import { t } from '../i18n';
 import { FilteredImage, type FilteredImageHandle } from '../components/editor/FilteredImage';
 import { AdjustmentsPanel } from '../components/editor/AdjustmentsPanel';
+import { OverlaysPanel } from '../components/editor/OverlaysPanel';
 import { PresetStrip } from '../components/editor/PresetStrip';
 import { CompareSlider } from '../components/editor/CompareSlider';
 import { IntensitySlider } from '../components/editor/IntensitySlider';
 import { useEditorStore } from '../store/editorStore';
 import { useToast } from '../components/ui/Toast';
 import { useVariant } from '../variant/VariantContext';
-import { saveSkImage } from '../services/saveImage';
+import { savePhoto, SavePhotoError } from '../services/savePhoto';
+import { sharePhoto, SharePhotoError } from '../services/sharePhoto';
 import { haptic } from '../services/haptics';
 import { track } from '../services/analytics';
 import { sampleHistogram } from '../engine/sampleHistogram';
@@ -35,13 +39,6 @@ import type { RootStackParamList } from '../navigation/types';
 type Route = RouteProp<RootStackParamList, 'Editor'>;
 
 type EditorTab = 'film' | 'adjust' | 'overlay' | 'body';
-
-const TAB_LABELS: Array<{ id: EditorTab; label: string }> = [
-  { id: 'film', label: '필름' },
-  { id: 'adjust', label: '조정' },
-  { id: 'overlay', label: '오버레이' },
-  { id: 'body', label: '바디' },
-];
 
 export function EditorScreen() {
   const theme = useTheme();
@@ -76,24 +73,55 @@ export function EditorScreen() {
   const filteredRef = useRef<FilteredImageHandle>(null);
   const [comparing, setComparing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  const TAB_LABELS = useMemo<Array<{ id: EditorTab; label: string }>>(
+    () => [
+      { id: 'film', label: copy.editor.tabs.film },
+      { id: 'adjust', label: copy.editor.tabs.adjust },
+      { id: 'overlay', label: copy.editor.tabs.overlay },
+      { id: 'body', label: copy.editor.tabs.body },
+    ],
+    [copy],
+  );
 
   const onSave = useCallback(async () => {
     if (!image || saving) return;
     setSaving(true);
     try {
       const snapshot = filteredRef.current?.snapshot();
-      if (!snapshot) throw new Error('snapshot-failed');
-      await saveSkImage(snapshot);
+      if (!snapshot) throw new SavePhotoError('snapshot-failed');
+      await savePhoto(snapshot, variant.appName);
       haptic.success();
-      track('photo_saved');
+      track('photo_saved', { variant: variant.id });
       showToast(copy.editor.savedToast);
-    } catch {
+    } catch (err) {
       haptic.error();
-      showToast(copy.errors.saveFailed, 'error');
+      const message =
+        err instanceof SavePhotoError && err.code === 'permission-denied'
+          ? copy.errors.permissionDenied
+          : copy.errors.saveFailed;
+      showToast(message, 'error');
     } finally {
       setSaving(false);
     }
-  }, [image, saving, copy, showToast]);
+  }, [image, saving, copy, showToast, variant]);
+
+  const onShare = useCallback(async () => {
+    if (!image || sharing) return;
+    setSharing(true);
+    try {
+      const snapshot = filteredRef.current?.snapshot();
+      if (!snapshot) throw new SharePhotoError('snapshot-failed');
+      await sharePhoto(snapshot);
+      track('photo_shared', { variant: variant.id });
+    } catch {
+      haptic.error();
+      showToast(copy.errors.shareFailed, 'error');
+    } finally {
+      setSharing(false);
+    }
+  }, [image, sharing, copy, showToast, variant]);
 
   const onAuto = useCallback(() => {
     if (!image) return;
@@ -123,6 +151,11 @@ export function EditorScreen() {
     nav.goBack();
   }, [nav, reset]);
 
+  const onCompareToggle = useCallback(() => {
+    haptic.tap();
+    setComparing((v) => !v);
+  }, []);
+
   const filtered = useMemo(
     () =>
       image ? (
@@ -148,6 +181,9 @@ export function EditorScreen() {
     [image, previewSize],
   );
 
+  const saveEnabled = !!image && !saving;
+  const shareEnabled = !!image && !sharing;
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
       <View style={styles.header}>
@@ -155,14 +191,20 @@ export function EditorScreen() {
           <Text style={[styles.back, { color: theme.colors.textMuted }]}>{copy.common.cancel}</Text>
         </Pressable>
         <View style={styles.headerCenter}>
-          <Pressable onPress={() => setComparing((v) => !v)} hitSlop={12}>
+          <Pressable onPress={onCompareToggle} hitSlop={12} disabled={!image}>
             <Text
               style={[
                 styles.title,
-                { color: comparing ? theme.colors.accent : theme.colors.text },
+                {
+                  color: !image
+                    ? theme.colors.textDimmed
+                    : comparing
+                    ? theme.colors.accent
+                    : theme.colors.text,
+                },
               ]}
             >
-              {comparing ? copy.editor.original : copy.editor.f8}
+              {copy.editor.compare}
             </Text>
           </Pressable>
           <Pressable onPress={onAuto} hitSlop={12} disabled={!image}>
@@ -172,20 +214,32 @@ export function EditorScreen() {
                 { color: !image ? theme.colors.textDimmed : theme.colors.textMuted },
               ]}
             >
-              자동
+              {copy.editor.auto}
             </Text>
           </Pressable>
         </View>
-        <Pressable onPress={onSave} hitSlop={12} disabled={!image || saving}>
-          <Text
-            style={[
-              styles.save,
-              { color: !image || saving ? theme.colors.textDimmed : theme.colors.accent },
-            ]}
-          >
-            {copy.common.save}
-          </Text>
-        </Pressable>
+        <View style={styles.headerRight}>
+          <Pressable onPress={onShare} hitSlop={12} disabled={!shareEnabled}>
+            <Text
+              style={[
+                styles.share,
+                { color: !shareEnabled ? theme.colors.textDimmed : theme.colors.text },
+              ]}
+            >
+              {copy.editor.share}
+            </Text>
+          </Pressable>
+          <Pressable onPress={onSave} hitSlop={12} disabled={!saveEnabled}>
+            <Text
+              style={[
+                styles.save,
+                { color: !saveEnabled ? theme.colors.textDimmed : theme.colors.accent },
+              ]}
+            >
+              {copy.common.save}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={[styles.preview, { width: previewSize, height: previewSize }]}>
@@ -212,7 +266,7 @@ export function EditorScreen() {
       {activePreset ? (
         <View style={styles.intensity}>
           <IntensitySlider
-            label="강도"
+            label={copy.editor.intensity}
             value={adjustments.intensity}
             min={0}
             max={100}
@@ -222,12 +276,12 @@ export function EditorScreen() {
       ) : null}
 
       <View style={[styles.tabs, { borderTopColor: theme.colors.border }]}>
-        {TAB_LABELS.map((t) => {
-          const isActive = tab === t.id;
+        {TAB_LABELS.map((entry) => {
+          const isActive = tab === entry.id;
           return (
             <Pressable
-              key={t.id}
-              onPress={() => setTab(t.id)}
+              key={entry.id}
+              onPress={() => setTab(entry.id)}
               style={[styles.tab, isActive && { borderTopColor: theme.colors.accent }]}
             >
               <Text
@@ -236,7 +290,7 @@ export function EditorScreen() {
                   { color: isActive ? theme.colors.text : theme.colors.textMuted },
                 ]}
               >
-                {t.label}
+                {entry.label}
               </Text>
             </Pressable>
           );
@@ -255,10 +309,11 @@ export function EditorScreen() {
           </>
         ) : null}
         {tab === 'adjust' ? <AdjustmentsPanel /> : null}
-        {tab === 'overlay' || tab === 'body' ? (
+        {tab === 'overlay' ? <OverlaysPanel /> : null}
+        {tab === 'body' ? (
           <View style={styles.placeholderPanel}>
             <Text style={[styles.placeholderText, { color: theme.colors.textDimmed }]}>
-              준비 중
+              {copy.editor.bodyPlaceholder}
             </Text>
           </View>
         ) : null}
@@ -278,8 +333,10 @@ const styles = StyleSheet.create({
   },
   back: { fontSize: 15, fontWeight: '500' },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: { fontSize: 16, fontWeight: '700', letterSpacing: -0.2 },
   auto: { fontSize: 13, fontWeight: '600', letterSpacing: -0.1 },
+  share: { fontSize: 14, fontWeight: '600' },
   save: { fontSize: 15, fontWeight: '700' },
   bodyFilm: {
     paddingHorizontal: 24,

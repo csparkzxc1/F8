@@ -20,6 +20,7 @@ export { FilteredImage } from './components/editor/FilteredImage';
 export type { FilteredImageHandle } from './components/editor/FilteredImage';
 export { IntensitySlider } from './components/editor/IntensitySlider';
 export { AdjustmentsPanel } from './components/editor/AdjustmentsPanel';
+export { OverlaysPanel } from './components/editor/OverlaysPanel';
 export { PresetStrip } from './components/editor/PresetStrip';
 export { CompareSlider } from './components/editor/CompareSlider';
 export { BodyFilmPicker } from './components/editor/BodyFilmPicker';
@@ -59,6 +60,10 @@ export type {
 export {
   pickPhoto,
   saveSkImage,
+  savePhoto,
+  SavePhotoError,
+  sharePhoto,
+  SharePhotoError,
   initIap,
   endIap,
   listOwned,
@@ -72,6 +77,8 @@ export {
   getPostHog,
   normalizeImage,
 } from './services';
+export type { SaveResult, SaveError } from './services/savePhoto';
+export type { ShareError } from './services/sharePhoto';
 export type { AnalyticsEvent, AnalyticsAdapter } from './services/analytics';
 export { useIapStore, isPackOwned, isPackUnlocked } from './store/iapStore';
 

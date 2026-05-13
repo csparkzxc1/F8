@@ -21,10 +21,30 @@ export type Dict = {
     f8: string;
     intensityZero: string;
     savedToast: string;
+    compare: string;
+    share: string;
+    auto: string;
+    intensity: string;
+    tabs: {
+      film: string;
+      adjust: string;
+      overlay: string;
+      body: string;
+    };
+    overlay: {
+      grain: string;
+      vignette: string;
+      lightLeak: string;
+      halation: string;
+    };
+    bodyPlaceholder: string;
+    placeholderSoon: string;
   };
   errors: {
     loadPhoto: string;
     saveFailed: string;
+    shareFailed: string;
+    permissionDenied: string;
   };
   store: {
     buy: string;

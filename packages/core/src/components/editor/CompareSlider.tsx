@@ -1,15 +1,14 @@
-// Drag horizontally to reveal the original through a vertical seam.
-// Long-press anywhere to bypass and show the source 1:1. Uses locationX
-// so the seam tracks the finger regardless of screen offset.
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  PanResponder,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type GestureResponderEvent,
-} from 'react-native';
+// Reanimated split-view comparator. Drag the seam left/right to reveal the
+// filtered ("after") vs. original ("before") halves. The shared seam value
+// lives on the UI thread so the seam, the clip layer, and the handle all
+// stay locked at 60fps.
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { useTheme } from '../../theme/ThemeProvider';
 import { t } from '../../i18n';
 
@@ -21,80 +20,85 @@ type Props = {
   initialRatio?: number;
 };
 
+const HANDLE = 28;
+const ARROW = 10;
+
 export function CompareSlider({ width, height, before, after, initialRatio = 0.5 }: Props) {
   const theme = useTheme();
   const copy = t();
-  const [ratio, setRatio] = useState(initialRatio);
-  const [holding, setHolding] = useState(false);
-  const ratioRef = useRef(initialRatio);
+  const seam = useSharedValue(initialRatio * width);
 
-  const apply = useCallback(
-    (localX: number) => {
-      const next = Math.max(0, Math.min(1, localX / Math.max(1, width)));
-      ratioRef.current = next;
-      setRatio(next);
-    },
-    [width],
-  );
+  const pan = Gesture.Pan()
+    .minDistance(0)
+    .onBegin((e) => {
+      'worklet';
+      seam.value = Math.max(0, Math.min(width, e.x));
+    })
+    .onUpdate((e) => {
+      'worklet';
+      seam.value = Math.max(0, Math.min(width, e.x));
+    });
 
-  const responder = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderGrant: (evt: GestureResponderEvent) => apply(evt.nativeEvent.locationX),
-        onPanResponderMove: (evt: GestureResponderEvent) => apply(evt.nativeEvent.locationX),
-      }),
-    [apply],
-  );
-
-  const seamX = (holding ? 1 : ratio) * width;
+  const clipStyle = useAnimatedStyle(() => ({ width: seam.value }));
+  const seamStyle = useAnimatedStyle(() => ({ transform: [{ translateX: seam.value - 0.5 }] }));
 
   return (
-    <Pressable
-      onLongPress={() => setHolding(true)}
-      onPressOut={() => setHolding(false)}
-      delayLongPress={120}
-      style={[styles.root, { width, height }]}
-    >
-      <View style={[styles.layer, { width, height }]}>{after}</View>
-      <View style={[styles.layer, { width: seamX, height, overflow: 'hidden' }]}>
-        <View style={{ width, height }}>{before}</View>
+    <GestureDetector gesture={pan}>
+      <View style={[styles.root, { width, height }]}>
+        {/* Right side: filtered after */}
+        <View style={[styles.layer, { width, height }]}>{after}</View>
+        {/* Left side: original before, clipped by the seam */}
+        <Animated.View style={[styles.layer, { height, overflow: 'hidden' }, clipStyle]}>
+          <View style={{ width, height }}>{before}</View>
+        </Animated.View>
+
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.seam, { height, backgroundColor: '#FFFFFF' }, seamStyle]}
+        >
+          <View style={[styles.handle, { borderColor: '#FFFFFF' }]}>
+            <Text style={styles.arrow}>‹</Text>
+            <Text style={styles.arrow}>›</Text>
+          </View>
+        </Animated.View>
+
+        <View style={styles.labels} pointerEvents="none">
+          <Text style={[styles.label, { color: theme.colors.text }]}>{copy.editor.original}</Text>
+          <Text style={[styles.label, { color: theme.colors.text }]}>{copy.editor.f8}</Text>
+        </View>
       </View>
-      <View
-        {...responder.panHandlers}
-        style={[styles.touchArea, { width, height }]}
-        pointerEvents="box-only"
-      />
-      <View
-        pointerEvents="none"
-        style={[
-          styles.seam,
-          { left: seamX - 1, height, backgroundColor: theme.colors.text },
-        ]}
-      >
-        <View style={[styles.handle, { borderColor: theme.colors.text }]} />
-      </View>
-      <View style={styles.labels} pointerEvents="none">
-        <Text style={[styles.label, { color: theme.colors.text }]}>{copy.editor.original}</Text>
-        <Text style={[styles.label, { color: theme.colors.text }]}>{copy.editor.f8}</Text>
-      </View>
-    </Pressable>
+    </GestureDetector>
   );
 }
 
 const styles = StyleSheet.create({
   root: { position: 'relative' },
   layer: { position: 'absolute', top: 0, left: 0 },
-  touchArea: { position: 'absolute', top: 0, left: 0 },
-  seam: { position: 'absolute', top: 0, width: 2, alignItems: 'center', justifyContent: 'center' },
-  handle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    backgroundColor: 'transparent',
+  seam: {
     position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  handle: {
+    width: HANDLE,
+    height: HANDLE,
+    borderRadius: HANDLE / 2,
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    position: 'absolute',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  arrow: {
+    color: '#FFFFFF',
+    fontSize: ARROW + 4,
+    lineHeight: ARROW + 4,
+    fontWeight: '700',
   },
   labels: {
     position: 'absolute',

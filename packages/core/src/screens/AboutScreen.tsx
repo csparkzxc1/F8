@@ -33,7 +33,7 @@ export function AboutScreen() {
           잘 찍는 비결을 묻는 사람들에게 단 한 줄로 답했습니다.
           {'\n\n'}
           <Text style={{ fontStyle: 'italic', color: theme.colors.text }}>
-            "f/8 and be there."
+            &ldquo;f/8 and be there.&rdquo;
           </Text>
           {'\n\n'}
           조리개 f/8에 맞춰놓고, 그냥 거기 있어라.

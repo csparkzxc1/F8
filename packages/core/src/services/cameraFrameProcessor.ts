@@ -11,11 +11,17 @@
 //
 // With the flag OFF this returns `undefined`, so <Camera> uses its normal
 // preview and the editor remains the source of truth.
-import { useMemo } from 'react';
+//
+// Race-safety: the active preset's LUT image lives on a SharedValue and the
+// worklet body is built once (empty deps). Switching presets only writes the
+// new SkImage into the SharedValue — no worklet runtime tear-down, so frames
+// in flight never reference a disposed closure.
+import { useEffect, useMemo } from 'react';
 import {
   useSkiaFrameProcessor,
   type DrawableFrameProcessor,
 } from 'react-native-vision-camera';
+import { useSharedValue } from 'react-native-worklets-core';
 import { Skia, TileMode, FilterMode, MipmapMode } from '@shopify/react-native-skia';
 import { LUT_SHADER } from '../engine/shaders/lut';
 import type { Preset } from '../variant/types';
@@ -26,7 +32,8 @@ export const ENABLE_LIVE_LUT = true;
 type Params = {
   preset: Preset | null;
   // The active preset's LUT, loaded once on the JS thread (via useImage) and
-  // handed to the worklet. Null → pass the frame through ungraded.
+  // handed to the worklet through a SharedValue. Null → pass the frame through
+  // ungraded.
   lut: SkImage | null;
 };
 
@@ -34,12 +41,31 @@ type Params = {
 const LIVE_INTENSITY = 1;
 
 export function useFilmFrameProcessor({ lut }: Params): DrawableFrameProcessor | undefined {
+  // SharedValue ferries the SkImage across the JS↔worklet boundary without
+  // rebuilding the worklet body on every preset change.
+  const lutSv = useSharedValue<SkImage | null>(null);
+  useEffect(() => {
+    lutSv.value = lut ?? null;
+  }, [lut, lutSv]);
+
   // `useSkiaFrameProcessor` must be called unconditionally to keep hook order
-  // stable; we gate the *return* on the flag instead.
+  // stable; we gate the *return* on the flag instead. Empty deps → the worklet
+  // body is compiled once and reused for the screen's lifetime.
   const frameProcessor = useSkiaFrameProcessor(
     (frame) => {
       'worklet';
-      if (!lut) {
+      const currentLut = lutSv.value;
+
+      // Pass-through paths: no LUT loaded yet, or the frame surface didn't
+      // hand us a usable SkImage (happens on the first frame after rotation,
+      // some front-camera transitions, and occasionally between presets).
+      if (!currentLut) {
+        frame.render();
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const frameImage = (frame as any).__skImage;
+      if (!frameImage || typeof frameImage.makeShaderOptions !== 'function') {
         frame.render();
         return;
       }
@@ -58,14 +84,13 @@ export function useFilmFrameProcessor({ lut }: Params): DrawableFrameProcessor |
         return;
       }
 
-      const frameImage = frame.__skImage;
       const srcShader = frameImage.makeShaderOptions(
         TileMode.Clamp,
         TileMode.Clamp,
         FilterMode.Linear,
         MipmapMode.None,
       );
-      const lutShader = lut.makeShaderOptions(
+      const lutShader = currentLut.makeShaderOptions(
         TileMode.Clamp,
         TileMode.Clamp,
         FilterMode.Linear,
@@ -80,7 +105,7 @@ export function useFilmFrameProcessor({ lut }: Params): DrawableFrameProcessor |
       // hardware and wrap in the frame's orientation matrix if needed.
       frame.drawRect(Skia.XYWHRect(0, 0, frame.width, frame.height), paint);
     },
-    [lut],
+    [],
   );
 
   return useMemo(

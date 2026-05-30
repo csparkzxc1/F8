@@ -34,7 +34,15 @@ export type Preset = {
   name: string;
   bodyId: string;
   filmId: string;
+  // Marketing display name of the film stock, shown in the editor caption
+  // ("Contax T2 × Kodak Portra 400"). Distinct from the films-table label,
+  // which is abbreviated for the compact picker chips. Falls back to the
+  // films-table label when omitted.
+  filmStockDisplayName?: string;
   thumbnail?: ImageAsset;
+  // Signature tone of the film, used as a solid placeholder tile background in
+  // the camera carousel until real filtered-preview thumbnails ship. Hex string.
+  thumbnailColor?: string;
   lutAsset?: ImageAsset;
   defaults: AdjustmentValues;
   isPremium: boolean;
@@ -69,6 +77,22 @@ export type PickerOption = {
   subLabel?: string;
 };
 
+// A camera body the user can select in the editor's [body] tab. Unlike a film
+// (a pure label), a body carries its own optical character that composites on
+// top of the active preset: an additive vignette, an additive halation/flare,
+// and a softness term that drives a light gaussian blur pass. Values are on the
+// same 0..100 UI scale as AdjustmentValues (bodies stay in the 0..40 range).
+// `isPremium` bodies unlock alongside a premium pack — see BodyPicker.
+export type CameraBody = {
+  id: string;
+  name: string;
+  description: string;
+  vignette: number;
+  softness: number;
+  flareIntensity: number;
+  isPremium: boolean;
+};
+
 export type VariantConfig = {
   id: VariantId;
   appName: string;
@@ -82,7 +106,7 @@ export type VariantConfig = {
 
   defaultPresets: Preset[];
   premiumPacks: PresetPack[];
-  bodies?: PickerOption[];
+  bodies?: CameraBody[];
   films?: PickerOption[];
 
   copy: VariantCopy;

@@ -1,20 +1,23 @@
-// Camera: vision-camera preview with a vertical preset rail, flash + flip
+// Camera: vision-camera preview with a bottom preset carousel, flash + flip
 // controls, 3×3 framing grid, and a shutter that brand-fades to black + "F8"
 // before pushing the captured frame into the editor.
 //
-// Live LUT preview is off until Phase 5 device profiling — see
-// services/cameraFrameProcessor.ts. The chosen preset is committed to the
-// editor store on shutter so EditorScreen renders the look immediately.
+// Live LUT preview is gated behind ENABLE_LIVE_LUT in
+// services/cameraFrameProcessor.ts (needs react-native-worklets-core + a device
+// build to profile). With the flag off, the chosen preset is committed to the
+// editor store on shutter so EditorScreen renders the look immediately; with it
+// on, the frame processor grades the live feed and the shutter saves WYSIWYG.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  FlatList,
   Linking,
   Pressable,
   StyleSheet,
   Text,
   View,
-  ScrollView,
   Image as RNImage,
+  type ListRenderItem,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -25,14 +28,19 @@ import {
   useCameraPermission,
   type PhotoFile,
 } from 'react-native-vision-camera';
+import { Skia, useImage } from '@shopify/react-native-skia';
 import { useTheme } from '../theme/ThemeProvider';
 import { useVariant } from '../variant/VariantContext';
 import { useEditorStore } from '../store/editorStore';
 import { useIapStore, isPackUnlocked } from '../store/iapStore';
-import { useFilmFrameProcessor } from '../services/cameraFrameProcessor';
+import { useFilmFrameProcessor, ENABLE_LIVE_LUT } from '../services/cameraFrameProcessor';
+import { renderLutStill } from '../engine/renderLutStill';
+import { inkOn } from '../utils/applyWatermark';
+import { savePhoto } from '../services/savePhoto';
 import { haptic } from '../services/haptics';
 import { track } from '../services/analytics';
 import { normalizeImage } from '../services/normalizeImage';
+import { useToast } from '../components/ui/Toast';
 import { t } from '../i18n';
 import { F8Logo } from '../components/brand/F8Logo';
 import type { Preset } from '../variant/types';
@@ -42,6 +50,17 @@ type Nav = NativeStackNavigationProp<RootStackParamList, 'Camera'>;
 
 type Facing = 'back' | 'front';
 type Flash = 'off' | 'on' | 'auto';
+
+// Carousel geometry. 64px tile + 8px gap = 72px stride so snapToInterval lands
+// each tile flush against the 16px content inset.
+const TILE = 64;
+const TILE_GAP = 8;
+const TILE_STRIDE = TILE + TILE_GAP; // 72
+
+// FlatList separator — the 8px gap between tiles.
+function CarouselGap() {
+  return <View style={{ width: TILE_GAP }} />;
+}
 
 // Loose, deterministic EXIF feel — keyed off the active preset so the strip
 // in the corner moves when the user changes the film. Not a real meter; the
@@ -72,13 +91,16 @@ export function CameraScreen() {
   const setPhoto = useEditorStore((s) => s.setPhoto);
   const setPreset = useEditorStore((s) => s.setPreset);
   const activePreset = useEditorStore((s) => s.activePreset);
-  const adjustments = useEditorStore((s) => s.adjustments);
   const ownedIds = useIapStore((s) => s.ownedPackIds);
 
   const fade = useRef(new Animated.Value(0)).current;
   const [shooting, setShooting] = useState(false);
+  const showToast = useToast((s) => s.show);
 
-  const frameProcessor = useFilmFrameProcessor({ preset: activePreset, adjustments });
+  // Active preset's LUT, loaded once on the JS thread. Fed to the live frame
+  // processor and reused on shutter for the WYSIWYG capture grade.
+  const activeLut = useImage(activePreset?.lutAsset ?? null);
+  const frameProcessor = useFilmFrameProcessor({ preset: activePreset, lut: activeLut });
 
   // Same filter rule as PresetStrip — defaults + every unlocked premium.
   const rail: Preset[] = useMemo(() => {
@@ -94,6 +116,17 @@ export function CameraScreen() {
     }
   }, [hasPermission, requestPermission]);
 
+  const brandFade = useCallback(
+    (onDone: () => void) => {
+      Animated.sequence([
+        Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.delay(120),
+        Animated.timing(fade, { toValue: 0, duration: 180, useNativeDriver: true }),
+      ]).start(onDone);
+    },
+    [fade],
+  );
+
   const onShutter = useCallback(async () => {
     if (!cameraRef.current || shooting) return;
     setShooting(true);
@@ -104,16 +137,28 @@ export function CameraScreen() {
       const photo: PhotoFile = await cameraRef.current.takePhoto({ flash });
       const rawUri = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
       const uri = await normalizeImage(rawUri);
+
+      if (ENABLE_LIVE_LUT) {
+        // WYSIWYG: the live feed was LUT-graded, so re-apply the same LUT at
+        // full intensity to the captured still and save it straight to the
+        // gallery (watermark included) — no editor round-trip.
+        const data = await Skia.Data.fromURI(uri);
+        const still = Skia.Image.MakeImageFromEncoded(data);
+        const graded = still ? renderLutStill(still, activeLut, 1) ?? still : null;
+        if (!graded) throw new Error('snapshot-failed');
+        await savePhoto(graded, variant.appName, { cityName: variant.cityName });
+        haptic.success();
+        track('photo_saved', { variant: variant.id });
+        showToast(copy.editor.savedToast);
+        brandFade(() => setShooting(false));
+        return;
+      }
+
       setPhoto(uri);
       // Keep the preset committed so EditorScreen renders the same look the
       // user framed through — applying via the live FilteredImage chain.
       if (activePreset) setPreset(activePreset);
-
-      Animated.sequence([
-        Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }),
-        Animated.delay(120),
-        Animated.timing(fade, { toValue: 0, duration: 180, useNativeDriver: true }),
-      ]).start(() => {
+      brandFade(() => {
         setShooting(false);
         nav.replace('Editor', { photoUri: uri });
       });
@@ -121,7 +166,21 @@ export function CameraScreen() {
       setShooting(false);
       haptic.error();
     }
-  }, [shooting, fade, setPhoto, setPreset, activePreset, flash, nav, variant.id]);
+  }, [
+    shooting,
+    brandFade,
+    setPhoto,
+    setPreset,
+    activePreset,
+    activeLut,
+    flash,
+    nav,
+    variant.id,
+    variant.appName,
+    variant.cityName,
+    showToast,
+    copy.editor.savedToast,
+  ]);
 
   const onTogglePreset = useCallback(
     (preset: Preset) => {
@@ -143,6 +202,41 @@ export function CameraScreen() {
     haptic.tap();
     setFlash((f) => (f === 'off' ? 'on' : f === 'on' ? 'auto' : 'off'));
   }, []);
+
+  // Bottom carousel tile: 64×64 thumb + Korean caption, beige border when
+  // active. onTogglePreset already fires a selection haptic. Until real
+  // filtered-preview PNGs ship, the thumb is the film's signature colour with a
+  // centred "F8" wordmark (ink auto-contrasts against the background).
+  const renderTile: ListRenderItem<Preset> = useCallback(
+    ({ item }) => {
+      const isActive = activePreset?.id === item.id;
+      const bg = item.thumbnailColor ?? '#2A2A2A';
+      return (
+        <Pressable onPress={() => onTogglePreset(item)} style={styles.tile}>
+          <View
+            style={[
+              styles.tileThumb,
+              { backgroundColor: bg },
+              isActive && { borderColor: theme.colors.accent, borderWidth: 2 },
+            ]}
+          >
+            {typeof item.thumbnail === 'number' ? (
+              <RNImage source={item.thumbnail} style={styles.tileImg} />
+            ) : (
+              <Text style={[styles.tileF8, { color: inkOn(bg) }]}>F8</Text>
+            )}
+          </View>
+          <Text
+            style={[styles.tileLabel, { color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.72)' }]}
+            numberOfLines={1}
+          >
+            {item.name}
+          </Text>
+        </Pressable>
+      );
+    },
+    [activePreset, onTogglePreset, theme.colors.accent],
+  );
 
   // Permission-denied path: deep-link to the OS settings page.
   if (!hasPermission) {
@@ -249,37 +343,23 @@ export function CameraScreen() {
           <Text style={styles.exif}>{exif}</Text>
         </View>
 
-        <View style={styles.body} pointerEvents="box-none">
-          <View style={{ flex: 1 }} />
-          <ScrollView
-            style={styles.rail}
-            contentContainerStyle={styles.railContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {rail.map((preset) => {
-              const isActive = activePreset?.id === preset.id;
-              return (
-                <Pressable
-                  key={preset.id}
-                  onPress={() => onTogglePreset(preset)}
-                  style={[
-                    styles.railTile,
-                    isActive && { borderColor: theme.colors.accent, backgroundColor: 'rgba(0,0,0,0.45)' },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.railLabel,
-                      { color: isActive ? '#FFFFFF' : 'rgba(255,255,255,0.7)' },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {preset.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+        {/* Spacer keeps the subject clear — the preset picker now lives in the
+            bottom carousel instead of a side rail that covered ~30% of frame. */}
+        <View style={styles.body} pointerEvents="box-none" />
+
+        <View style={styles.carousel} pointerEvents="box-none">
+          <FlatList
+            data={rail}
+            keyExtractor={(p) => p.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselContent}
+            ItemSeparatorComponent={CarouselGap}
+            snapToInterval={TILE_STRIDE}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            renderItem={renderTile}
+          />
         </View>
 
         <View style={styles.bottom}>
@@ -377,28 +457,37 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.6,
   },
-  body: {
-    flexDirection: 'row',
-    flex: 1,
-    paddingTop: 60,
-    paddingBottom: 24,
+  body: { flex: 1 },
+  carousel: {
+    // Sits just above the shutter row; ~88px tall (64 thumb + caption).
+    paddingBottom: 12,
   },
-  rail: {
-    width: 84,
-    paddingTop: 4,
+  carouselContent: {
+    paddingHorizontal: 16,
+    alignItems: 'flex-start',
   },
-  railContent: { paddingHorizontal: 8, paddingBottom: 16, gap: 8 },
-  railTile: {
-    minWidth: 64,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1.5,
+  tile: { width: TILE, alignItems: 'center' },
+  tileThumb: {
+    width: TILE,
+    height: TILE,
+    borderRadius: 10,
+    borderWidth: 2,
     borderColor: 'transparent',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    overflow: 'hidden',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  railLabel: { fontSize: 13, fontWeight: '700', letterSpacing: -0.2 },
+  tileImg: { width: '100%', height: '100%' },
+  tileF8: { fontSize: 25, fontWeight: '900', letterSpacing: -0.5 },
+  tileLabel: {
+    marginTop: 5,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    maxWidth: TILE + 8,
+    textAlign: 'center',
+  },
   bottom: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -4,6 +4,16 @@
 import React from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  Info,
+  Mail,
+  Package,
+  RefreshCw,
+  Shield,
+} from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
@@ -17,6 +27,11 @@ import { t } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Settings'>;
+
+// Every lucide icon shares the same component type, so we borrow one icon's
+// type for the Row's `icon` prop rather than re-deriving lucide's prop shape.
+type SettingsIcon = typeof Info;
+const STROKE = 1.5;
 
 // TODO: replace with the real public URLs before launch.
 const TERMS_URL = 'https://f8.app/terms';
@@ -69,23 +84,34 @@ export function SettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <Section theme={theme} label="구매">
-          <Row theme={theme} label={copy.store.restore} onPress={onRestore} />
-          <Row theme={theme} label="프리셋 팩" onPress={() => nav.navigate('PresetStore')} />
+          <Row theme={theme} icon={RefreshCw} label={copy.store.restore} onPress={onRestore} />
+          <Row
+            theme={theme}
+            icon={Package}
+            label="프리셋 팩"
+            onPress={() => nav.navigate('PresetStore')}
+          />
         </Section>
 
         <Section theme={theme} label="브랜드">
-          <Row theme={theme} label={copy.common.about} onPress={() => nav.navigate('About')} />
+          <Row
+            theme={theme}
+            icon={Info}
+            label={copy.common.about}
+            onPress={() => nav.navigate('About')}
+          />
         </Section>
 
         <Section theme={theme} label="문서">
-          <Row theme={theme} label="이용약관" onPress={() => openUrl(TERMS_URL)} external />
+          <Row theme={theme} icon={FileText} label="이용약관" onPress={() => openUrl(TERMS_URL)} external />
           <Row
             theme={theme}
+            icon={Shield}
             label="개인정보 처리방침"
             onPress={() => openUrl(PRIVACY_URL)}
             external
           />
-          <Row theme={theme} label="문의하기" onPress={() => openUrl(CONTACT_MAIL)} external />
+          <Row theme={theme} icon={Mail} label="문의하기" onPress={() => openUrl(CONTACT_MAIL)} external />
         </Section>
 
         <View style={styles.versionBlock}>
@@ -119,13 +145,17 @@ function Row({
   label,
   onPress,
   theme,
+  icon: Icon,
   external,
 }: {
   label: string;
   onPress: () => void;
   theme: ReturnType<typeof useTheme>;
+  icon: SettingsIcon;
   external?: boolean;
 }) {
+  // External links get the ExternalLink glyph; internal rows get a chevron.
+  const RightIcon = external ? ExternalLink : ChevronRight;
   return (
     <Pressable
       onPress={onPress}
@@ -136,10 +166,9 @@ function Row({
         { backgroundColor: pressed ? theme.colors.surfaceElevated : 'transparent' },
       ]}
     >
+      <Icon size={20} color={theme.colors.text} strokeWidth={STROKE} />
       <Text style={[styles.rowLabel, { color: theme.colors.text }]}>{label}</Text>
-      <Text style={[styles.rowChevron, { color: theme.colors.textDimmed }]}>
-        {external ? '↗' : '›'}
-      </Text>
+      <RightIcon size={16} color={theme.colors.textMuted} strokeWidth={STROKE} />
     </Pressable>
   );
 }
@@ -168,12 +197,11 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  rowLabel: { fontSize: 15, fontWeight: '500' },
-  rowChevron: { fontSize: 18, fontWeight: '400' },
+  rowLabel: { flex: 1, fontSize: 15, fontWeight: '500' },
   versionBlock: { alignItems: 'center', paddingVertical: 32 },
   versionText: { fontSize: 12, fontVariant: ['tabular-nums'] },
 });

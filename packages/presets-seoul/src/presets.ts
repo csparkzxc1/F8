@@ -7,20 +7,25 @@
 // LUT assets are 512×512 strip PNGs (8×8 grid of 64-wide blue slices). The
 // current PNGs are dummy tinted-identity LUTs; replace with real film LUTs
 // before launch — see TODO comments per preset.
-import type { Preset, PresetPack, AdjustmentValues, PickerOption } from '@f8/core';
+import type { Preset, PresetPack, AdjustmentValues, CameraBody, PickerOption } from '@f8/core';
 
-// Body / film tables consumed by BodyFilmPicker and the editor's
-// "Body × Film" line under PresetStrip. IDs match the bodyId/filmId on each
-// Preset below.
-export const seoulBodies: PickerOption[] = [
-  { id: 'contax-t2', label: 'Contax T2' },
-  { id: 'olympus-mju', label: 'Olympus mju II' },
-  { id: 'leica-m6', label: 'Leica M6' },
-  { id: 'mamiya-645', label: 'Mamiya 645' },
-  { id: 'pentax-k1000', label: 'Pentax K1000' },
-  { id: 'hasselblad-500cm', label: 'Hasselblad 500CM' },
-  { id: 'yashica-t4', label: 'Yashica T4' },
-  { id: 'arri-alexa', label: 'ARRI Alexa' },
+// Camera bodies selectable in the editor's [body] tab. Each carries its own
+// optical character (vignette / softness / flareIntensity, all 0..40) that the
+// shader chain composites on top of the active preset. IDs match the bodyId on
+// each Preset below, so a preset can recommend its intended body.
+//
+// The three premium bodies (Leica M6, Hasselblad 500CM, ARRI Alexa) unlock
+// alongside the Vintage Korea pack. A preset may still recommend a premium body
+// as its look; the lock only blocks selecting that body manually on other shots.
+export const seoulBodies: CameraBody[] = [
+  { id: 'contax-t2', name: 'Contax T2', description: '프리미엄 컴팩트', vignette: 30, softness: 20, flareIntensity: 25, isPremium: false },
+  { id: 'olympus-mju', name: 'Olympus mju II', description: '포켓 스트리트', vignette: 40, softness: 30, flareIntensity: 20, isPremium: false },
+  { id: 'leica-m6', name: 'Leica M6', description: '정밀 레인지파인더', vignette: 12, softness: 8, flareIntensity: 8, isPremium: true },
+  { id: 'mamiya-645', name: 'Mamiya 645', description: '중형 6×4.5', vignette: 10, softness: 15, flareIntensity: 8, isPremium: false },
+  { id: 'pentax-k1000', name: 'Pentax K1000', description: '날카로운 SLR', vignette: 15, softness: 5, flareIntensity: 5, isPremium: false },
+  { id: 'hasselblad-500cm', name: 'Hasselblad 500CM', description: '중형 6×6', vignette: 10, softness: 18, flareIntensity: 10, isPremium: true },
+  { id: 'yashica-t4', name: 'Yashica T4', description: '자이스 포인트앤슛', vignette: 35, softness: 25, flareIntensity: 15, isPremium: false },
+  { id: 'arri-alexa', name: 'ARRI Alexa', description: '시네마 디지털', vignette: 8, softness: 12, flareIntensity: 22, isPremium: true },
 ];
 
 export const seoulFilms: PickerOption[] = [
@@ -57,7 +62,9 @@ const ugi: Preset = {
   name: '우기',
   bodyId: 'pentax-k1000',
   filmId: 'kodak-ektar100',
+  filmStockDisplayName: 'Kodak Ektar 100',
   isPremium: true,
+  thumbnailColor: '#6A7F8C',
   lutAsset: require('./luts/ugi.png'),
   defaults: adj({
     intensity: 85,
@@ -77,7 +84,9 @@ const caffein: Preset = {
   name: '카페인',
   bodyId: 'mamiya-645',
   filmId: 'cinestill-50d',
+  filmStockDisplayName: 'Cinestill 50D',
   isPremium: true,
+  thumbnailColor: '#8B6F47',
   lutAsset: require('./luts/caffein.png'),
   defaults: adj({
     intensity: 80,
@@ -99,7 +108,9 @@ const ibangin: Preset = {
   name: '이방인',
   bodyId: 'arri-alexa',
   filmId: 'kodak-vision3-250d',
+  filmStockDisplayName: 'Kodak Vision3 250D',
   isPremium: true,
+  thumbnailColor: '#5C6470',
   lutAsset: require('./luts/ibangin.png'),
   defaults: adj({
     intensity: 80,
@@ -117,7 +128,9 @@ const bomnal: Preset = {
   name: '봄날',
   bodyId: 'hasselblad-500cm',
   filmId: 'fuji-pro400h',
+  filmStockDisplayName: 'Fuji Pro 400H',
   isPremium: true,
+  thumbnailColor: '#D6B4A8',
   lutAsset: require('./luts/bomnal.png'),
   defaults: adj({
     intensity: 80,
@@ -140,7 +153,9 @@ const goyo: Preset = {
   name: '고요',
   bodyId: 'leica-m6',
   filmId: 'kodak-trix400',
+  filmStockDisplayName: 'Kodak Tri-X 400',
   isPremium: true,
+  thumbnailColor: '#6B6B6B',
   lutAsset: require('./luts/goyo.png'),
   defaults: adj({
     intensity: 100,
@@ -157,7 +172,9 @@ const dongbaek: Preset = {
   name: '동백',
   bodyId: 'contax-t2',
   filmId: 'kodak-portra400',
+  filmStockDisplayName: 'Kodak Portra 400',
   isPremium: true,
+  thumbnailColor: '#C44545',
   lutAsset: require('./luts/dongbaek.png'),
   defaults: adj({
     intensity: 85,

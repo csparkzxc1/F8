@@ -1,52 +1,90 @@
-// Vision-camera frame processor wiring for live LUT preview.
+// Live LUT preview via vision-camera's Skia frame processor.
 //
-// Status: skeleton. The worklet here is intentionally a no-op pass-through.
-// Wiring an actual Skia LUT into the frame processor on every frame requires:
-//   1. `react-native-worklets-core` installed and configured in babel
-//   2. `@shopify/react-native-skia`'s `useSkiaFrameProcessor` hook (Skia
-//      integration ships as a separate plugin for vision-camera v4)
-//   3. A 720p (or 540p on low-end) downscale before the LUT pass so the GPU
-//      isn't grinding on a 4K texture each frame
+// Gated behind ENABLE_LIVE_LUT. Turning it on requires:
+//   1. `react-native-worklets-core` installed (peer dep) + its babel plugin —
+//      see apps/f8-seoul/babel.config.js
+//   2. A native rebuild (`expo prebuild` + `pod install`) so the worklets +
+//      Skia frame-processor native modules link
+//   3. On-device profiling — the build machine can't measure FPS, so the perf
+//      TODOs below (orientation transform, per-frame allocation) are tuned on
+//      hardware before flipping the flag for release.
 //
-// We hold off on enabling those on this 4 GB build machine — we can't profile
-// 60 fps without a device — and ship the editor preview as the source of
-// truth. When Phase 5 EAS builds let us measure on hardware, swap this stub
-// for the real Skia frame processor and remove the ENABLE_LIVE_LUT flag.
+// With the flag OFF this returns `undefined`, so <Camera> uses its normal
+// preview and the editor remains the source of truth.
 import { useMemo } from 'react';
-import { useFrameProcessor, type ReadonlyFrameProcessor } from 'react-native-vision-camera';
-import type { Preset, AdjustmentValues } from '../variant/types';
+import {
+  useSkiaFrameProcessor,
+  type DrawableFrameProcessor,
+} from 'react-native-vision-camera';
+import { Skia, TileMode, FilterMode, MipmapMode } from '@shopify/react-native-skia';
+import { LUT_SHADER } from '../engine/shaders/lut';
+import type { Preset } from '../variant/types';
+import type { SkImage } from '@shopify/react-native-skia';
 
-export const ENABLE_LIVE_LUT = false;
+export const ENABLE_LIVE_LUT = true;
 
 type Params = {
   preset: Preset | null;
-  adjustments: AdjustmentValues;
+  // The active preset's LUT, loaded once on the JS thread (via useImage) and
+  // handed to the worklet. Null → pass the frame through ungraded.
+  lut: SkImage | null;
 };
 
-export function useFilmFrameProcessor({
-  preset,
-  adjustments,
-}: Params): ReadonlyFrameProcessor | undefined {
-  // `useFrameProcessor` has to be called unconditionally — it owns a worklet
-  // capture context that React relies on for lifetime tracking.
-  const presetId = preset?.id ?? null;
-  const intensity = adjustments.intensity;
+// Live intensity is always 100% — there's no strength slider on the camera.
+const LIVE_INTENSITY = 1;
 
-  const fp = useFrameProcessor(
+export function useFilmFrameProcessor({ lut }: Params): DrawableFrameProcessor | undefined {
+  // `useSkiaFrameProcessor` must be called unconditionally to keep hook order
+  // stable; we gate the *return* on the flag instead.
+  const frameProcessor = useSkiaFrameProcessor(
     (frame) => {
       'worklet';
-      // TODO: bind preset.lutAsset + adjustments through to a Skia frame
-      // processor (`useSkiaFrameProcessor` from @shopify/react-native-skia).
-      // For now this is a pass-through so the preview keeps running while
-      // we land the editor pipeline first.
-      // Touch the captured vars so the worklet picks up changes when the
-      // user switches presets.
-      void presetId;
-      void intensity;
-      void frame;
+      if (!lut) {
+        frame.render();
+        return;
+      }
+
+      // Compile + cache the LUT effect on the worklet runtime's globalThis so
+      // we don't recompile every frame (Skia objects don't cross runtimes, so
+      // we can't reuse the JS-thread getLutEffect()).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const g = globalThis as any;
+      if (!g.__f8LutEffect) {
+        g.__f8LutEffect = Skia.RuntimeEffect.Make(LUT_SHADER);
+      }
+      const effect = g.__f8LutEffect;
+      if (!effect) {
+        frame.render();
+        return;
+      }
+
+      const frameImage = frame.__skImage;
+      const srcShader = frameImage.makeShaderOptions(
+        TileMode.Clamp,
+        TileMode.Clamp,
+        FilterMode.Linear,
+        MipmapMode.None,
+      );
+      const lutShader = lut.makeShaderOptions(
+        TileMode.Clamp,
+        TileMode.Clamp,
+        FilterMode.Linear,
+        MipmapMode.None,
+      );
+      const shader = effect.makeShaderWithChildren([LIVE_INTENSITY], [srcShader, lutShader]);
+
+      const paint = Skia.Paint();
+      paint.setShader(shader);
+      // TODO(device): drawing __skImage's shader directly skips the orientation
+      // transform frame.render() would apply — verify front/back + portrait on
+      // hardware and wrap in the frame's orientation matrix if needed.
+      frame.drawRect(Skia.XYWHRect(0, 0, frame.width, frame.height), paint);
     },
-    [presetId, intensity],
+    [lut],
   );
 
-  return useMemo(() => (ENABLE_LIVE_LUT ? fp : undefined), [fp]);
+  return useMemo(
+    () => (ENABLE_LIVE_LUT ? frameProcessor : undefined),
+    [frameProcessor],
+  );
 }

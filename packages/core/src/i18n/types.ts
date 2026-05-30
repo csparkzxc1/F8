@@ -50,6 +50,9 @@ export type Dict = {
     buy: string;
     restore: string;
   };
+  about: {
+    trademarks: string;
+  };
   // One-line poetic blurb shown under each preset name.
   presets: {
     noeul: string;

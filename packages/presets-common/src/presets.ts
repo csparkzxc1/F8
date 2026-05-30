@@ -30,7 +30,9 @@ const noeul: Preset = {
   name: '노을',
   bodyId: 'contax-t2',
   filmId: 'cinestill-800t',
+  filmStockDisplayName: 'Cinestill 800T',
   isPremium: false,
+  thumbnailColor: '#E89B6A',
   lutAsset: require('./luts/noeul.png'),
   defaults: adj({
     intensity: 85,
@@ -51,7 +53,9 @@ const saebyeok: Preset = {
   name: '새벽',
   bodyId: 'olympus-mju',
   filmId: 'fuji-pro400h',
+  filmStockDisplayName: 'Fuji Pro 400H',
   isPremium: false,
+  thumbnailColor: '#B5C8D6',
   lutAsset: require('./luts/saebyeok.png'),
   defaults: adj({
     intensity: 80,
@@ -70,9 +74,13 @@ const saebyeok: Preset = {
 const cheotnun: Preset = {
   id: 'cheotnun',
   name: '첫눈',
-  bodyId: 'leica-m6',
+  // contax-t2 (free): leica-m6 is a premium body, so a free preset can't
+  // recommend it. The Portra 160 cool-soft look fits the T2's fine-grain feel.
+  bodyId: 'contax-t2',
   filmId: 'kodak-portra160',
+  filmStockDisplayName: 'Kodak Portra 160',
   isPremium: false,
+  thumbnailColor: '#E8E8EC',
   lutAsset: require('./luts/cheotnun.png'),
   defaults: adj({
     intensity: 75,
@@ -91,7 +99,9 @@ const yunyeon: Preset = {
   name: '유년',
   bodyId: 'olympus-mju',
   filmId: 'fuji-superia200-expired',
+  filmStockDisplayName: 'Fuji Superia 200',
   isPremium: false,
+  thumbnailColor: '#C9A77D',
   lutAsset: require('./luts/yunyeon.png'),
   defaults: adj({
     intensity: 90,
@@ -113,7 +123,9 @@ const yeoreumbam: Preset = {
   name: '여름밤',
   bodyId: 'yashica-t4',
   filmId: 'kodak-gold200',
+  filmStockDisplayName: 'Kodak Gold 200',
   isPremium: false,
+  thumbnailColor: '#4A3F5C',
   lutAsset: require('./luts/yeoreumbam.png'),
   defaults: adj({
     intensity: 88,
@@ -134,7 +146,9 @@ const hyuil: Preset = {
   name: '휴일',
   bodyId: 'contax-t2',
   filmId: 'kodak-portra400',
+  filmStockDisplayName: 'Kodak Portra 400',
   isPremium: false,
+  thumbnailColor: '#E8C39E',
   lutAsset: require('./luts/hyuil.png'),
   defaults: adj({
     intensity: 75,

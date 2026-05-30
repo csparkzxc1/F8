@@ -52,6 +52,10 @@ export const en: Dict = {
     buy: 'Buy',
     restore: 'Restore purchases',
   },
+  about: {
+    trademarks:
+      'Camera and film names mentioned in this app are trademarks of their respective owners. F8 is not affiliated with or endorsed by these companies. References are descriptive only.',
+  },
   presets: {
     noeul: 'The last light.',
     saebyeok: 'Still blue.',

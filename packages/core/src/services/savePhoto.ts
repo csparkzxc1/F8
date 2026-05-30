@@ -4,6 +4,7 @@
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import type { SkImage } from '@shopify/react-native-skia';
+import { applyWatermark } from '../utils/applyWatermark';
 
 export type SaveResult = {
   uri: string;
@@ -19,11 +20,28 @@ export class SavePhotoError extends Error {
   }
 }
 
-export async function savePhoto(image: SkImage, albumName: string): Promise<SaveResult> {
+export async function savePhoto(
+  image: SkImage,
+  albumName: string,
+  // When provided, an "F8 · CITY" wordmark is burned into the bottom-right
+  // corner before the file is written. Omit it to save the frame untouched.
+  watermark?: { cityName: string },
+): Promise<SaveResult> {
   const perm = await MediaLibrary.requestPermissionsAsync();
   if (!perm.granted) throw new SavePhotoError('permission-denied');
 
-  const data = image.encodeToBase64();
+  let marked = image;
+  if (watermark) {
+    console.log('[F8][savePhoto] applyWatermark input:', image.width(), image.height(), watermark);
+    marked = applyWatermark(image, watermark);
+    console.log(
+      '[F8][savePhoto] applyWatermark output:',
+      marked ? 'OK' : 'NULL',
+      'same-ref-as-input=',
+      marked === image,
+    );
+  }
+  const data = marked.encodeToBase64();
   if (!data) throw new SavePhotoError('snapshot-failed');
 
   const filename = `f8-${Date.now()}.png`;

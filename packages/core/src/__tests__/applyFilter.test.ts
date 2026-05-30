@@ -1,4 +1,4 @@
-import { buildUniforms } from '../engine/applyFilter';
+import { buildUniforms, softnessToSigma } from '../engine/applyFilter';
 import { defaultAdjustments } from '../store/editorStore';
 
 describe('buildUniforms', () => {
@@ -41,5 +41,39 @@ describe('buildUniforms', () => {
   it('passes through seed unchanged', () => {
     const u = buildUniforms(defaultAdjustments, res, 42);
     expect(u.grain.seed).toBe(42);
+  });
+
+  it('leaves vignette/halation untouched and softness off with no body', () => {
+    const u = buildUniforms({ ...defaultAdjustments, vignette: 20, halation: 10 }, res);
+    expect(u.lightleak.vignetteAmount).toBeCloseTo(0.2);
+    expect(u.lightleak.halation).toBeCloseTo(0.1);
+    expect(u.body.sigma).toBe(0);
+  });
+
+  it('adds body vignette and flare on top of the preset, clamped to 100', () => {
+    const adj = { ...defaultAdjustments, vignette: 80, halation: 90 };
+    const body = { vignette: 40, softness: 0, flareIntensity: 25 };
+    const u = buildUniforms(adj, res, 0, body);
+    // 80 + 40 = 120 → clamped to 100 → 1.0
+    expect(u.lightleak.vignetteAmount).toBeCloseTo(1);
+    // 90 + 25 = 115 → clamped to 100 → 1.0
+    expect(u.lightleak.halation).toBeCloseTo(1);
+  });
+});
+
+describe('softnessToSigma', () => {
+  it('stays sharp at or below 10', () => {
+    expect(softnessToSigma(0)).toBe(0);
+    expect(softnessToSigma(10)).toBe(0);
+  });
+
+  it('ramps 0..0.5 across the 10..20 band', () => {
+    expect(softnessToSigma(15)).toBeCloseTo(0.25);
+    expect(softnessToSigma(20)).toBeCloseTo(0.5);
+  });
+
+  it('ramps 0.5..1.0 above 20', () => {
+    expect(softnessToSigma(25)).toBeCloseTo(0.75);
+    expect(softnessToSigma(30)).toBeCloseTo(1);
   });
 });

@@ -2,6 +2,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Info } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import Constants from 'expo-constants';
 import { useVariant } from '../variant/VariantContext';
@@ -78,13 +79,20 @@ export function AboutScreen() {
 
         <View style={[styles.footer, { borderColor: theme.colors.border }]}>
           <F8Logo size={20} color={theme.colors.textMuted} />
-          <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
-            {variant.appName} · v{version}
-          </Text>
+          <View style={styles.versionLine}>
+            <Info size={12} color={theme.colors.textMuted} strokeWidth={1.5} />
+            <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
+              {variant.appName} · v{version}
+            </Text>
+          </View>
           <Text style={[styles.footerText, { color: theme.colors.textDimmed }]}>
             Made in Seoul
           </Text>
         </View>
+
+        <Text style={[styles.trademarks, { color: theme.colors.textMuted }]}>
+          {copy.about.trademarks}
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -137,4 +145,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   footerText: { fontSize: 12 },
+  versionLine: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  trademarks: { fontSize: 10, lineHeight: 15 },
 });

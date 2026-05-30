@@ -4,11 +4,13 @@ import { LUT_SHADER } from './lut';
 import { ADJUSTMENTS_SHADER } from './adjustments';
 import { GRAIN_SHADER } from './grain';
 import { LIGHTLEAK_SHADER } from './lightleak';
+import { BODY_SHADER } from './body';
 
 let _lut: SkRuntimeEffect | null = null;
 let _adj: SkRuntimeEffect | null = null;
 let _grain: SkRuntimeEffect | null = null;
 let _leak: SkRuntimeEffect | null = null;
+let _body: SkRuntimeEffect | null = null;
 
 function compile(name: string, source: string): SkRuntimeEffect {
   const eff = Skia.RuntimeEffect.Make(source);
@@ -34,4 +36,8 @@ export function getLightleakEffect(): SkRuntimeEffect {
   return (_leak ??= compile('lightleak', LIGHTLEAK_SHADER));
 }
 
-export { LUT_SHADER, ADJUSTMENTS_SHADER, GRAIN_SHADER, LIGHTLEAK_SHADER };
+export function getBodyEffect(): SkRuntimeEffect {
+  return (_body ??= compile('body', BODY_SHADER));
+}
+
+export { LUT_SHADER, ADJUSTMENTS_SHADER, GRAIN_SHADER, LIGHTLEAK_SHADER, BODY_SHADER };

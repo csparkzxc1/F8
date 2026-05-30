@@ -9,6 +9,7 @@ export type {
   Preset,
   PresetPack,
   PickerOption,
+  CameraBody,
   ImageAsset,
   AdjustmentValues,
 } from './variant/types';
@@ -24,6 +25,7 @@ export { OverlaysPanel } from './components/editor/OverlaysPanel';
 export { PresetStrip } from './components/editor/PresetStrip';
 export { CompareSlider } from './components/editor/CompareSlider';
 export { BodyFilmPicker } from './components/editor/BodyFilmPicker';
+export { BodyPicker } from './components/editor/BodyPicker';
 
 export { ToastHost, useToast } from './components/ui/Toast';
 export { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -44,10 +46,13 @@ export {
   getAdjustmentsEffect,
   getGrainEffect,
   getLightleakEffect,
+  getBodyEffect,
+  softnessToSigma,
   LUT_SHADER,
   ADJUSTMENTS_SHADER,
   GRAIN_SHADER,
   LIGHTLEAK_SHADER,
+  BODY_SHADER,
 } from './engine';
 export type {
   FilterUniforms,
@@ -55,6 +60,8 @@ export type {
   AdjustmentUniforms,
   GrainUniforms,
   LightleakUniforms,
+  BodyUniforms,
+  BodyEffect,
   Histogram,
 } from './engine';
 
@@ -83,5 +90,15 @@ export type { SaveResult, SaveError } from './services/savePhoto';
 export type { ShareError } from './services/sharePhoto';
 export type { AnalyticsEvent, AnalyticsAdapter } from './services/analytics';
 export { useIapStore, isPackOwned, isPackUnlocked } from './store/iapStore';
+
+export {
+  applyWatermark,
+  watermarkMetrics,
+  pickWatermarkInk,
+  averageLuminance,
+  luminance,
+  cityWordmark,
+} from './utils/applyWatermark';
+export type { WatermarkOptions, WatermarkInk, WatermarkMetrics } from './utils/applyWatermark';
 
 export type { RootStackParamList } from './navigation/types';

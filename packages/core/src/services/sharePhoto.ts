@@ -7,6 +7,7 @@
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import type { SkImage } from '@shopify/react-native-skia';
+import { applyWatermark } from '../utils/applyWatermark';
 
 export type ShareError = 'unavailable' | 'snapshot-failed' | 'write-failed';
 
@@ -17,11 +18,16 @@ export class SharePhotoError extends Error {
   }
 }
 
-export async function sharePhoto(image: SkImage): Promise<void> {
+// `watermark`, when set, burns "F8 · CITY" in before sharing (same as savePhoto).
+export async function sharePhoto(
+  image: SkImage,
+  watermark?: { cityName: string },
+): Promise<void> {
   const available = await Sharing.isAvailableAsync();
   if (!available) throw new SharePhotoError('unavailable');
 
-  const data = image.encodeToBase64();
+  const marked = watermark ? applyWatermark(image, watermark) : image;
+  const data = marked.encodeToBase64();
   if (!data) throw new SharePhotoError('snapshot-failed');
 
   const path = `${FileSystem.cacheDirectory}f8-share-${Date.now()}.png`;

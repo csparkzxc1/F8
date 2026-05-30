@@ -1,4 +1,5 @@
 // F8 Seoul entry. Init analytics first, then hand off to the shared shell.
+import { registerRootComponent } from 'expo';
 import Constants from 'expo-constants';
 import { createF8App, initPostHog } from '@f8/core';
 import { f8SeoulConfig } from './src/variant.config';
@@ -10,4 +11,6 @@ if (POSTHOG_KEY) {
   initPostHog(POSTHOG_KEY);
 }
 
-export default createF8App(f8SeoulConfig);
+const F8SeoulApp = createF8App(f8SeoulConfig);
+registerRootComponent(F8SeoulApp);
+export default F8SeoulApp;

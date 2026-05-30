@@ -130,7 +130,7 @@ export function PresetStrip() {
 }
 
 const styles = StyleSheet.create({
-  list: { paddingHorizontal: 20, gap: 10 },
+  list: { paddingHorizontal: 24, gap: 12 },
   tile: {
     width: TILE,
     alignItems: 'center',

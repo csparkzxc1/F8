@@ -17,11 +17,12 @@ import {
 } from '@shopify/react-native-skia';
 import {
   getAdjustmentsEffect,
+  getBodyEffect,
   getGrainEffect,
   getLightleakEffect,
   getLutEffect,
 } from '../../engine/shaders';
-import { buildUniforms } from '../../engine/applyFilter';
+import { buildUniforms, type BodyEffect } from '../../engine/applyFilter';
 import { haptic } from '../../services/haptics';
 import type { AdjustmentValues } from '../../variant/types';
 
@@ -29,6 +30,9 @@ type Props = {
   image: SkImage;
   lut?: SkImage;
   adjustments: AdjustmentValues;
+  // Optical character of the selected camera body, composited on top of the
+  // adjustments (additive vignette/flare + a softness blur pass).
+  body?: BodyEffect | null;
   width: number;
   height: number;
   seed?: number;
@@ -39,15 +43,15 @@ export type FilteredImageHandle = {
 };
 
 export const FilteredImage = forwardRef<FilteredImageHandle, Props>(function FilteredImage(
-  { image, lut, adjustments, width, height, seed = 0 },
+  { image, lut, adjustments, body, width, height, seed = 0 },
   ref,
 ) {
   const canvasRef = useCanvasRef();
   const [holding, setHolding] = useState(false);
 
   const uniforms = useMemo(
-    () => buildUniforms(adjustments, [width, height], seed),
-    [adjustments, width, height, seed],
+    () => buildUniforms(adjustments, [width, height], seed, body),
+    [adjustments, body, width, height, seed],
   );
 
   useImperativeHandle(
@@ -68,6 +72,7 @@ export const FilteredImage = forwardRef<FilteredImageHandle, Props>(function Fil
       uniforms.lightleak.vignetteAmount > 0.001 ||
       uniforms.lightleak.halation > 0.001);
   const lutOn = !holding && !!lut && uniforms.lut.intensity > 0.001;
+  const bodyOn = !holding && uniforms.body.sigma > 0.01;
 
   let chain: React.ReactNode;
   if (holding) {
@@ -86,6 +91,17 @@ export const FilteredImage = forwardRef<FilteredImageHandle, Props>(function Fil
         <Shader source={lutEff} uniforms={uniforms.lut}>
           {chain}
           <ImageShader image={lut} fit="fill" rect={{ x: 0, y: 0, width: 512, height: 512 }} />
+        </Shader>
+      );
+    }
+
+    // Optical softness sits between color (adjust/LUT) and texture (grain) so
+    // grain stays crisp on top of the softened image.
+    if (bodyOn) {
+      const bodyEff = getBodyEffect();
+      chain = (
+        <Shader source={bodyEff} uniforms={uniforms.body}>
+          {chain}
         </Shader>
       );
     }

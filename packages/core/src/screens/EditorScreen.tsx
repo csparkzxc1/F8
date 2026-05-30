@@ -23,6 +23,7 @@ import { FilteredImage, type FilteredImageHandle } from '../components/editor/Fi
 import { AdjustmentsPanel } from '../components/editor/AdjustmentsPanel';
 import { OverlaysPanel } from '../components/editor/OverlaysPanel';
 import { PresetStrip } from '../components/editor/PresetStrip';
+import { BodyPicker } from '../components/editor/BodyPicker';
 import { CompareSlider } from '../components/editor/CompareSlider';
 import { IntensitySlider } from '../components/editor/IntensitySlider';
 import { useEditorStore } from '../store/editorStore';
@@ -52,6 +53,7 @@ export function EditorScreen() {
   const storedPhotoUri = useEditorStore((s) => s.photoUri);
   const adjustments = useEditorStore((s) => s.adjustments);
   const activePreset = useEditorStore((s) => s.activePreset);
+  const currentBodyId = useEditorStore((s) => s.currentBodyId);
   const mergeAdjustments = useEditorStore((s) => s.mergeAdjustments);
   const setAdjustment = useEditorStore((s) => s.setAdjustment);
   const reset = useEditorStore((s) => s.reset);
@@ -59,11 +61,31 @@ export function EditorScreen() {
   const showToast = useToast((s) => s.show);
   const [tab, setTab] = useState<EditorTab>('film');
 
-  const bodyLabel = activePreset
-    ? variant.bodies?.find((b) => b.id === activePreset.bodyId)?.label
-    : undefined;
-  const filmLabel = activePreset
-    ? variant.films?.find((f) => f.id === activePreset.filmId)?.label
+  // Resolve the active body: the store id, falling back to the first free body
+  // so the render and the caption always have a concrete body to work with.
+  const bodies = useMemo(() => variant.bodies ?? [], [variant.bodies]);
+  const selectedBody = useMemo(() => {
+    const firstFree = bodies.find((b) => !b.isPremium) ?? bodies[0];
+    return bodies.find((b) => b.id === currentBodyId) ?? firstFree;
+  }, [bodies, currentBodyId]);
+  const bodyEffect = useMemo(
+    () =>
+      selectedBody
+        ? {
+            vignette: selectedBody.vignette,
+            softness: selectedBody.softness,
+            flareIntensity: selectedBody.flareIntensity,
+          }
+        : null,
+    [selectedBody],
+  );
+
+  // Film stock shown in the caption: the preset's marketing display name,
+  // falling back to the films-table label, then the raw filmId.
+  const filmStockName = activePreset
+    ? activePreset.filmStockDisplayName ??
+      variant.films?.find((f) => f.id === activePreset.filmId)?.label ??
+      activePreset.filmId
     : undefined;
 
   const image = useImage(photoUri ?? null);
@@ -91,7 +113,8 @@ export function EditorScreen() {
     try {
       const snapshot = filteredRef.current?.snapshot();
       if (!snapshot) throw new SavePhotoError('snapshot-failed');
-      await savePhoto(snapshot, variant.appName);
+      console.log('[F8][editor] saving with watermark:', { cityName: variant.cityName });
+      await savePhoto(snapshot, variant.appName, { cityName: variant.cityName });
       haptic.success();
       track('photo_saved', { variant: variant.id });
       showToast(copy.editor.savedToast);
@@ -113,7 +136,7 @@ export function EditorScreen() {
     try {
       const snapshot = filteredRef.current?.snapshot();
       if (!snapshot) throw new SharePhotoError('snapshot-failed');
-      await sharePhoto(snapshot);
+      await sharePhoto(snapshot, { cityName: variant.cityName });
       track('photo_shared', { variant: variant.id });
     } catch {
       haptic.error();
@@ -164,11 +187,12 @@ export function EditorScreen() {
           image={image}
           lut={lut ?? undefined}
           adjustments={adjustments}
+          body={bodyEffect}
           width={previewSize}
           height={previewSize}
         />
       ) : null,
-    [image, lut, adjustments, previewSize],
+    [image, lut, adjustments, bodyEffect, previewSize],
   );
 
   const original = useMemo(
@@ -326,22 +350,16 @@ export function EditorScreen() {
         {tab === 'film' ? (
           <>
             <PresetStrip />
-            {bodyLabel && filmLabel ? (
+            {activePreset && selectedBody ? (
               <Text style={[styles.bodyFilm, { color: theme.colors.textMuted }]}>
-                {bodyLabel} × {filmLabel}
+                {selectedBody.name} × {filmStockName}
               </Text>
             ) : null}
           </>
         ) : null}
         {tab === 'adjust' ? <AdjustmentsPanel /> : null}
         {tab === 'overlay' ? <OverlaysPanel /> : null}
-        {tab === 'body' ? (
-          <View style={styles.placeholderPanel}>
-            <Text style={[styles.placeholderText, { color: theme.colors.textDimmed }]}>
-              {copy.editor.bodyPlaceholder}
-            </Text>
-          </View>
-        ) : null}
+        {tab === 'body' ? <BodyPicker /> : null}
       </ScrollView>
     </SafeAreaView>
   );

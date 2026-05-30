@@ -52,6 +52,10 @@ export const ko: Dict = {
     buy: '구매',
     restore: '구매 복원',
   },
+  about: {
+    trademarks:
+      '본 앱에 언급된 카메라와 필름 이름은 각 제조사의 상표이며, F8은 해당 회사들과 제휴 관계가 없습니다. 이름 사용은 시각적 영감의 출처를 설명하기 위한 지칭적 사용입니다.',
+  },
   presets: {
     noeul: '마지막 빛.',
     saebyeok: '아직 푸르다.',

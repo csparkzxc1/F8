@@ -29,6 +29,10 @@ export type AdjustmentValues = {
   halation: number;
 };
 
+// Surface grouping used by the camera carousel's category bar. Optional on
+// every preset — untagged presets only appear under the "all" tab.
+export type PresetCategory = 'time' | 'season' | 'daily' | 'mood';
+
 export type Preset = {
   id: string;
   name: string;
@@ -46,6 +50,9 @@ export type Preset = {
   lutAsset?: ImageAsset;
   defaults: AdjustmentValues;
   isPremium: boolean;
+  // Optional category tag the carousel groups by. A preset may stay untagged;
+  // it'll then show up only under the "all" tab.
+  category?: PresetCategory;
 };
 
 export type PresetPack = {

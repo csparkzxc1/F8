@@ -35,18 +35,25 @@ type Params = {
   // handed to the worklet through a SharedValue. Null → pass the frame through
   // ungraded.
   lut: SkImage | null;
+  // 0..1 strength. Slider on the camera screen controls live grading without
+  // touching the editor store. 0 → pass-through path (same as no LUT).
+  intensity?: number;
 };
 
-// Live intensity is always 100% — there's no strength slider on the camera.
-const LIVE_INTENSITY = 1;
-
-export function useFilmFrameProcessor({ lut }: Params): DrawableFrameProcessor | undefined {
-  // SharedValue ferries the SkImage across the JS↔worklet boundary without
-  // rebuilding the worklet body on every preset change.
+export function useFilmFrameProcessor({
+  lut,
+  intensity = 1,
+}: Params): DrawableFrameProcessor | undefined {
+  // SharedValues ferry the SkImage + strength across the JS↔worklet boundary
+  // without rebuilding the worklet body on every preset or slider change.
   const lutSv = useSharedValue<SkImage | null>(null);
+  const intensitySv = useSharedValue<number>(1);
   useEffect(() => {
     lutSv.value = lut ?? null;
   }, [lut, lutSv]);
+  useEffect(() => {
+    intensitySv.value = Math.max(0, Math.min(1, intensity));
+  }, [intensity, intensitySv]);
 
   // `useSkiaFrameProcessor` must be called unconditionally to keep hook order
   // stable; we gate the *return* on the flag instead. Empty deps → the worklet
@@ -55,11 +62,13 @@ export function useFilmFrameProcessor({ lut }: Params): DrawableFrameProcessor |
     (frame) => {
       'worklet';
       const currentLut = lutSv.value;
+      const currentIntensity = intensitySv.value;
 
-      // Pass-through paths: no LUT loaded yet, or the frame surface didn't
-      // hand us a usable SkImage (happens on the first frame after rotation,
-      // some front-camera transitions, and occasionally between presets).
-      if (!currentLut) {
+      // Pass-through paths: no LUT loaded yet, strength dialled to 0, or the
+      // frame surface didn't hand us a usable SkImage (happens on the first
+      // frame after rotation, some front-camera transitions, and occasionally
+      // between presets).
+      if (!currentLut || currentIntensity <= 0.001) {
         frame.render();
         return;
       }
@@ -96,7 +105,7 @@ export function useFilmFrameProcessor({ lut }: Params): DrawableFrameProcessor |
         FilterMode.Linear,
         MipmapMode.None,
       );
-      const shader = effect.makeShaderWithChildren([LIVE_INTENSITY], [srcShader, lutShader]);
+      const shader = effect.makeShaderWithChildren([currentIntensity], [srcShader, lutShader]);
 
       const paint = Skia.Paint();
       paint.setShader(shader);

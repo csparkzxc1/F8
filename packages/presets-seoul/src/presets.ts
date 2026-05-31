@@ -64,6 +64,7 @@ const ugi: Preset = {
   filmId: 'kodak-ektar100',
   filmStockDisplayName: 'Kodak Ektar 100',
   isPremium: true,
+  category: 'season',
   thumbnailColor: '#6A7F8C',
   lutAsset: require('./luts/ugi.png'),
   defaults: adj({
@@ -86,6 +87,7 @@ const caffein: Preset = {
   filmId: 'cinestill-50d',
   filmStockDisplayName: 'Cinestill 50D',
   isPremium: true,
+  category: 'daily',
   thumbnailColor: '#8B6F47',
   lutAsset: require('./luts/caffein.png'),
   defaults: adj({
@@ -110,6 +112,7 @@ const ibangin: Preset = {
   filmId: 'kodak-vision3-250d',
   filmStockDisplayName: 'Kodak Vision3 250D',
   isPremium: true,
+  category: 'mood',
   thumbnailColor: '#5C6470',
   lutAsset: require('./luts/ibangin.png'),
   defaults: adj({
@@ -130,6 +133,7 @@ const bomnal: Preset = {
   filmId: 'fuji-pro400h',
   filmStockDisplayName: 'Fuji Pro 400H',
   isPremium: true,
+  category: 'season',
   thumbnailColor: '#D6B4A8',
   lutAsset: require('./luts/bomnal.png'),
   defaults: adj({
@@ -155,6 +159,7 @@ const goyo: Preset = {
   filmId: 'kodak-trix400',
   filmStockDisplayName: 'Kodak Tri-X 400',
   isPremium: true,
+  category: 'mood',
   thumbnailColor: '#6B6B6B',
   lutAsset: require('./luts/goyo.png'),
   defaults: adj({
@@ -174,6 +179,7 @@ const dongbaek: Preset = {
   filmId: 'kodak-portra400',
   filmStockDisplayName: 'Kodak Portra 400',
   isPremium: true,
+  category: 'mood',
   thumbnailColor: '#C44545',
   lutAsset: require('./luts/dongbaek.png'),
   defaults: adj({

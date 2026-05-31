@@ -32,6 +32,7 @@ const noeul: Preset = {
   filmId: 'cinestill-800t',
   filmStockDisplayName: 'Cinestill 800T',
   isPremium: false,
+  category: 'time',
   thumbnailColor: '#E89B6A',
   lutAsset: require('./luts/noeul.png'),
   defaults: adj({
@@ -55,6 +56,7 @@ const saebyeok: Preset = {
   filmId: 'fuji-pro400h',
   filmStockDisplayName: 'Fuji Pro 400H',
   isPremium: false,
+  category: 'time',
   thumbnailColor: '#B5C8D6',
   lutAsset: require('./luts/saebyeok.png'),
   defaults: adj({
@@ -80,6 +82,7 @@ const cheotnun: Preset = {
   filmId: 'kodak-portra160',
   filmStockDisplayName: 'Kodak Portra 160',
   isPremium: false,
+  category: 'season',
   thumbnailColor: '#E8E8EC',
   lutAsset: require('./luts/cheotnun.png'),
   defaults: adj({
@@ -101,6 +104,7 @@ const yunyeon: Preset = {
   filmId: 'fuji-superia200-expired',
   filmStockDisplayName: 'Fuji Superia 200',
   isPremium: false,
+  category: 'mood',
   thumbnailColor: '#C9A77D',
   lutAsset: require('./luts/yunyeon.png'),
   defaults: adj({
@@ -125,6 +129,7 @@ const yeoreumbam: Preset = {
   filmId: 'kodak-gold200',
   filmStockDisplayName: 'Kodak Gold 200',
   isPremium: false,
+  category: 'time',
   thumbnailColor: '#4A3F5C',
   lutAsset: require('./luts/yeoreumbam.png'),
   defaults: adj({
@@ -148,6 +153,7 @@ const hyuil: Preset = {
   filmId: 'kodak-portra400',
   filmStockDisplayName: 'Kodak Portra 400',
   isPremium: false,
+  category: 'daily',
   thumbnailColor: '#E8C39E',
   lutAsset: require('./luts/hyuil.png'),
   defaults: adj({

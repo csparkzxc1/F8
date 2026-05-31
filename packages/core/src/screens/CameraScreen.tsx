@@ -648,10 +648,13 @@ function StrengthBar({
       accessibilityRole="adjustable"
       accessibilityLabel="강도"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(value) }}
-      style={[styles.strengthTrack, { backgroundColor: trackColor }]}
+      style={styles.strengthHit}
     >
-      <View style={[styles.strengthFill, { width: fillW, backgroundColor: fillColor }]} />
+      <View pointerEvents="none" style={[styles.strengthTrack, { backgroundColor: trackColor }]}>
+        <View style={[styles.strengthFill, { width: fillW, backgroundColor: fillColor }]} />
+      </View>
       <View
+        pointerEvents="none"
         style={[
           styles.strengthThumb,
           {
@@ -717,11 +720,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingTop: 14,
   },
-  strengthTrack: { flex: 1, height: 4, borderRadius: 2, position: 'relative' },
+  // 24px-tall hit area so the finger doesn't have to land on the 4px line.
+  // The visual track sits inside it; the thumb floats above. Both inner views
+  // are pointerEvents="none" so PanResponder.locationX stays relative to this
+  // wrapper and never gets hijacked by the thumb the moment it moves under
+  // the finger.
+  strengthHit: {
+    flex: 1,
+    height: 24,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  strengthTrack: { height: 4, borderRadius: 2, width: '100%' },
   strengthFill: { height: 4, borderRadius: 2 },
   strengthThumb: {
     position: 'absolute',
-    top: -5,
+    top: 5,
     width: 14,
     height: 14,
     borderRadius: 7,

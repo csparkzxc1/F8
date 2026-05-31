@@ -21,8 +21,8 @@ import {
 // TEMP debug switch. When on, applyWatermark logs each stage to the Metro
 // console and stamps a red 50×50 probe square at the top-left of the export so
 // we can tell "surface/snapshot works but text doesn't" from "nothing renders".
-// Flip to false once the watermark is confirmed on-device.
-export const WATERMARK_DEBUG = true;
+// Confirmed working on-device — left wired but defaulted off.
+export const WATERMARK_DEBUG = false;
 
 export type WatermarkOptions = {
   // The city/theme word shown after "F8 ·". Comes from variant.cityName.
@@ -71,13 +71,18 @@ export type WatermarkMetrics = {
 };
 
 // All dimensions scale off the photo width so the mark reads the same on a
-// 1080px export and a 4096px one.
+// 1080px export and a 4096px one. F8 sits at 5.5% of width — thick enough to
+// register as a wordmark, not so thick it competes with the subject.
+export const WATERMARK_F8_RATIO = 0.055;
+export const WATERMARK_CITY_RATIO = 0.55;
+export const WATERMARK_GAP_RATIO = 0.3;
+
 export function watermarkMetrics(width: number): WatermarkMetrics {
-  const f8Size = width * 0.045;
+  const f8Size = width * WATERMARK_F8_RATIO;
   return {
     pad: width * 0.035,
     f8Size,
-    citySize: f8Size * 0.5,
+    citySize: f8Size * WATERMARK_CITY_RATIO,
     cityLetterSpacing: 2,
     sampleSize: Math.max(1, Math.round(width * 0.22)),
   };
@@ -213,17 +218,34 @@ export function applyWatermark(image: SkImage, options: WatermarkOptions): SkIma
   );
 
   // 3. Fonts with a verified fallback chain.
+  //   - 'Inter' / 'Inter-Black' first: requires the .ttf to be bundled and
+  //     registered via expo-font in app.config.ts. PostScript-name lookup
+  //     ('Inter-Black') catches platforms where matchFamilyStyle doesn't honour
+  //     family + weight together.
+  //   - 'SF Pro Display' next: iOS-bundled, gives the geometric sans tone we
+  //     want without the file dependency.
+  //   - 'Helvetica Neue' / 'Helvetica' / 'Arial': last-resort safety net,
+  //     guaranteed on iOS so we never serif-fallback into a romantic look.
   const fontMgr = Skia.FontMgr.System();
-  const chain = [options.fontFamily ?? 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial'];
+  const chain = [
+    options.fontFamily ?? 'Inter',
+    'Inter-Black',
+    'SF Pro Display',
+    'Helvetica Neue',
+    'Helvetica',
+    'Arial',
+  ];
   const heavyFace = resolveFace(fontMgr, chain, FontWeight.Black);
   const regularFace = resolveFace(fontMgr, chain, FontWeight.Medium);
   // Skia.Font(undefined, size) → platform default face, which always renders.
   const f8Font = Skia.Font(heavyFace ?? undefined, m.f8Size);
   const cityFont = Skia.Font(regularFace ?? undefined, m.citySize);
 
-  // 4. Measure the run so we can right-align it.
+  // 4. Measure the run so we can right-align it. The middle dot reuses the F8
+  //    font so its weight matches the wordmark instead of falling back to a
+  //    thin glyph in the city face.
   const f8W = f8Font.getTextWidth('F8');
-  const gap = m.f8Size * 0.32;
+  const gap = m.f8Size * WATERMARK_GAP_RATIO;
   const dotW = f8Font.getTextWidth('·');
   const cityW =
     city.length > 0

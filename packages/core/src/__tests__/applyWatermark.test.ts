@@ -61,14 +61,14 @@ describe('watermarkMetrics', () => {
   it('scales padding and type off the photo width', () => {
     const m = watermarkMetrics(1000);
     expect(m.pad).toBeCloseTo(35);
-    expect(m.f8Size).toBeCloseTo(45);
-    expect(m.citySize).toBeCloseTo(22.5);
+    expect(m.f8Size).toBeCloseTo(55);
+    expect(m.citySize).toBeCloseTo(30.25);
     expect(m.cityLetterSpacing).toBe(2);
   });
 
-  it('keeps the city wordmark half the size of "F8"', () => {
+  it('keeps the city wordmark 0.55× the size of "F8"', () => {
     const m = watermarkMetrics(2048);
-    expect(m.citySize).toBeCloseTo(m.f8Size * 0.5);
+    expect(m.citySize).toBeCloseTo(m.f8Size * 0.55);
   });
 
   it('samples a non-degenerate corner region', () => {

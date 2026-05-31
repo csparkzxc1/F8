@@ -39,6 +39,17 @@ const config: ExpoConfig = {
     'expo-dev-client',
     'react-native-iap',
     [
+      // Register the bundled Inter typeface (weight 900) so iOS adds it to
+      // UIAppFonts at prebuild time. Skia's FontMgr.System() then resolves
+      // family "Inter" → the bundled face, and applyWatermark stamps the
+      // wordmark in the brand voice instead of the platform default serif.
+      // Drop the .ttf at `assets/fonts/Inter-Black.ttf` before prebuild.
+      'expo-font',
+      {
+        fonts: ['./assets/fonts/Inter-Black.ttf'],
+      },
+    ],
+    [
       'expo-image-picker',
       {
         photosPermission: '필름 카메라처럼 사진을 불러오기 위해 사진 접근이 필요합니다.',
